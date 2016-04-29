@@ -130,46 +130,68 @@ unsigned long time_diff(long unsigned time1, long unsigned time2)
 }
 
 
-bool last_sig;
-unsigned long last_on;
-//unsigned long last_off;
-unsigned long priod;
-unsigned long imp;
-unsigned int cnt;
+volatile unsigned long period;
+volatile unsigned long imp;
+volatile unsigned int cnt;
 
 SIGNAL(PCINT1_vect) //PCINT13 PC5 ADC5 
 {
+  static volatile bool valid=false;
+  static volatile unsigned long imp_int;
+  static volatile bool last_sig;
+  static volatile unsigned long last_on;
+  
   bool sig=PINC&_BV(PC5);
   if(last_sig != sig) {
     //unsigned long time = millis();
     unsigned long time = micros();
     if(sig) {
-      ++cnt;
-      priod = time_diff(last_on,time);
+      if(valid) {
+        period = time_diff(last_on,time);
+        imp = imp_int;
+        ++cnt;
+      }
+      valid = true;
       last_on = time;
     } else {
-      imp = time_diff(last_on,time);
+      imp_int = time_diff(last_on,time);
     }
     last_sig = sig;
   }
 }
 
+int calc_q(unsigned long period,unsigned long imp)
+{
+    int dead_time = period/251;
+    return 5000*(imp-dead_time/2)/(period-dead_time);
+}
+
+unsigned int _cnt;
+int _ppm;
 
 void loop(void) {
   tft.fillScreen(BLACK);
   char buf[128];
-  for (int i=0;i<100;++i) {
-    tft.setCursor(0, 0);
-    tft.setTextColor(YELLOW);
-    tft.setTextSize(3);
-    tft.fillRect(0,0,100,21, BLACK);
-    tft.println(i);
-    delay(1000);
-  Serial.println("Ping!");
-  sprintf(buf,"%lu/%lu/%u",priod,imp,cnt);
-  Serial.println(buf);
-    
-  }
+  tft.setTextColor(YELLOW);
+  tft.setTextSize(12);
+  for (;;) {
+  //Serial.println("Ping!");
+    if(_cnt != cnt) {
+      int ppm=calc_q(period,imp);
+      sprintf(buf,"%d:%lu/%lu/%u",ppm,period,imp,cnt);
+      Serial.println(buf);
+      Serial.println(ppm);
+      if(_ppm != ppm) {
+        //tft.fillRect(0,0,100,21, BLACK);
+        tft.fillScreen(BLACK);
+        tft.setCursor(10, 80);
+        tft.println(ppm);
+        _ppm = ppm;
+      }
+      _cnt = cnt;
+    }
+    // delay(1000);
+   }
 }
 
 
