@@ -63,7 +63,7 @@ Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 void setup_pcint()
 {
   DDRC &= ~_BV(PC5);
-  PORTC |= _BV(PC5);
+  //PORTC |= _BV(PC5);
   PCMSK1 |= _BV(PCINT13);
   PCICR |= _BV(PCIE1);
 }
@@ -126,7 +126,7 @@ unsigned long time_diff(long unsigned time1, long unsigned time2)
   if(time2>=time2)
     return time2-time1;
   else
-    return (ULONG_MAX-time1)+time2;
+    return (ULONG_MAX-time1)+time2+1;
 }
 
 
@@ -169,11 +169,48 @@ int calc_q(unsigned long period,unsigned long imp)
 unsigned int _cnt;
 int _ppm;
 
+inline uint16_t RGB(uint8_t r,uint8_t g,uint8_t b) {
+  return tft.color565(r,g,b);
+}
+
+
+uint16_t gr_gradient(float x)
+{
+      uint16_t c=x*511;
+      if(c<256)
+        return RGB(c,255,0);
+      else if(c<512)
+        return RGB(255,511-c,0);
+      else 
+        return RGB(255,255,255);
+}
+
+
+void testColors()
+{
+  for (int i=0;i<320;++i) {
+    uint16_t c = gr_gradient((float)i/319.0);
+    tft.drawFastVLine(i,0, 10, c);
+  }
+}
+
+float alarm_color(int16_t ppm)
+{
+    const int16_t min=0;
+    const int16_t max=2000;
+    const float r_min=0;
+    const float r_max=1;
+    if (ppm<=min)return r_min;
+    if (ppm>=max)return r_max;
+    return r_min + (ppm-min)*(r_max-r_min)/(max-min);
+}
+
 void loop(void) {
   tft.fillScreen(BLACK);
   char buf[128];
   tft.setTextColor(YELLOW);
   tft.setTextSize(12);
+  testColors();
   for (;;) {
   //Serial.println("Ping!");
     if(_cnt != cnt) {
@@ -183,8 +220,12 @@ void loop(void) {
       Serial.println(ppm);
       if(_ppm != ppm) {
         //tft.fillRect(0,0,100,21, BLACK);
-        tft.fillScreen(BLACK);
+//        tft.fillScreen(BLACK);
         tft.setCursor(10, 80);
+        tft.setTextColor(BLACK);      
+        tft.println(_ppm);
+        tft.setCursor(10, 80);
+        tft.setTextColor(gr_gradient(alarm_color(ppm)));      
         tft.println(ppm);
         _ppm = ppm;
       }
