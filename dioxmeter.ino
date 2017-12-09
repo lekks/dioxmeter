@@ -23,6 +23,36 @@
 
 TftSpfd5408 tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
+class TftPrint {
+  int x,y;
+  char sz;
+  bool printed;
+  int last_val;
+public:
+  TftPrint(int x,int y,char sz):x(x),y(y),sz(sz),printed(false){};
+  void clear() {
+    if(printed) {
+      tft.setCursor(x, y);
+      tft.setTextSize(sz);  
+      tft.setTextColor(BLACK);  
+      tft.print(last_val);
+      printed = false; 
+    }
+  }
+  void print(int val,uint16_t color) {
+    if(val!=last_val || !printed) {
+      clear();
+      tft.setCursor(x, y);
+      tft.setTextSize(sz);  
+      tft.setTextColor(color);  
+      tft.print(val);
+      printed = true;
+      last_val=val; 
+    }
+  }
+};
+
+
 static void setup_pcint()
 {
   DDRC &= ~_BV(PC5);
@@ -46,26 +76,9 @@ void setup(void) {
   setup_pcint();
 }
 
-static unsigned long time_diff(long unsigned time1, long unsigned time2)
-{
-  if(time2>=time2)
-    return time2-time1;
-  else
-    return (ULONG_MAX-time1)+time2+1;
-}
-
-
-static int calc_q(unsigned long period,unsigned long imp)
-{
-    int dead_time = period/251;
-    return 5000*(imp-dead_time/2)/(period-dead_time);
-}
-
-
 static inline uint16_t RGB(uint8_t r,uint8_t g,uint8_t b) {
   return tft.color565(r,g,b);
 }
-
 
 static uint16_t gr_gradient(float x)
 {
@@ -77,6 +90,7 @@ static uint16_t gr_gradient(float x)
       else 
         return RGB(255,255,255);
 }
+
 
 
 static void testColors()
@@ -96,6 +110,45 @@ static float alarm_color(int16_t ppm)
     if (ppm<=min)return r_min;
     if (ppm>=max)return r_max;
     return r_min + (ppm-min)*(r_max-r_min)/(max-min);
+}
+
+class Plotter {
+    const int16_t min=400;
+    const int16_t max=2000;
+    const int16_t pos_min=0;
+    const int16_t pos_max=220;
+    const int16_t xmin=300;
+    const int16_t xmax=319;
+    const int16_t ymax=240;
+public:
+  int16_t ypos (int16_t ppm) {
+      if (ppm<=min)return pos_min;
+      if (ppm>=max)return pos_max;
+      return pos_min + (int32_t)(ppm-min)*(pos_max-pos_min)/(max-min);
+  }
+  void plot(int16_t ppm, uint16_t color) {
+    for(int y=pos_min;y<pos_max;y++) {
+      if(y>ypos(ppm))
+        tft.drawLine(xmin, ymax-y, xmax, ymax-y, BLACK);
+      else
+        tft.drawLine(xmin, ymax-y, xmax, ymax-y, color);
+    }
+  }
+};
+
+
+static unsigned long time_diff(long unsigned time1, long unsigned time2)
+{
+  if(time2>=time2)
+    return time2-time1;
+  else
+    return (ULONG_MAX-time1)+time2+1;
+}
+
+static int calc_ppm(unsigned long period,unsigned long imp)
+{
+    int dead_time = period/251;
+    return 5000*(imp-dead_time/2)/(period-dead_time);
 }
 
 static volatile unsigned long period;
@@ -128,35 +181,40 @@ SIGNAL(PCINT1_vect) //PCINT13 PC5 ADC5
   }
 }
 
+static void dump(int ppm,unsigned long period,unsigned long imp,unsigned int cnt)
+{
+  char buf[128];
+  sprintf(buf,"%d:%lu/%lu/%u",ppm,period,imp,cnt);
+  Serial.println(buf);
+}
 
 void loop(void) {
   static unsigned int _cnt;
+  
   static int _ppm;
-
   tft.fillScreen(BLACK);
-  char buf[128];
   tft.setTextColor(YELLOW);
   tft.setTextSize(12);
+  
   testColors();
+
+  TftPrint y_printer(10,180,5);
+  TftPrint ppm_printer(10,80,12);
+  Plotter plotter;
+  int ppm = 0;
   for (;;) {
-  //Serial.println("Ping!");
     if(_cnt != cnt) {
-      int ppm=calc_q(period,imp);
-      sprintf(buf,"%d:%lu/%lu/%u",ppm,period,imp,cnt);
-      Serial.println(buf);
-      Serial.println(ppm);
-      if(_ppm != ppm) {
-        //tft.fillRect(0,0,100,21, BLACK);
-//        tft.fillScreen(BLACK);
-        tft.setCursor(10, 80);
-        tft.setTextColor(BLACK);      
-        tft.println(_ppm);
-        tft.setCursor(10, 80);
-        tft.setTextColor(gr_gradient(alarm_color(ppm)));      
-        tft.println(ppm);
-        _ppm = ppm;
-      }
+      ppm=calc_ppm(period,imp);
+      dump(ppm,period,imp,cnt);
       _cnt = cnt;
+    }
+    if(_ppm != ppm) {
+      //tft.fillRect(10,80,200,300, BLACK);
+      //tft.fillScreen(BLACK);
+      uint16_t color=gr_gradient(alarm_color(ppm));
+      ppm_printer.print(ppm,color);
+      plotter.plot(ppm,color);
+      _ppm = ppm;
     }
     // delay(1000);
    }
