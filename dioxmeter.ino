@@ -21,6 +21,8 @@
 #define YELLOW  0xFFE0
 #define WHITE   0xFFFF
 
+unsigned long PLOT_DELAY=2000;
+
 TftSpfd5408 tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
 class TftPrint {
@@ -201,6 +203,7 @@ void loop(void) {
   TftPrint y_printer(10,180,5);
   TftPrint ppm_printer(10,80,12);
   Plotter plotter;
+  unsigned long next_plot_time = millis()+PLOT_DELAY;
   int ppm = 0;
   for (;;) {
     if(_cnt != cnt) {
@@ -215,6 +218,12 @@ void loop(void) {
       ppm_printer.print(ppm,color);
       plotter.plot(ppm,color);
       _ppm = ppm;
+    }
+
+    unsigned long current_time = millis();
+    if(current_time >= next_plot_time) {
+      Serial.println("Plot");
+      next_plot_time+=PLOT_DELAY;
     }
     // delay(1000);
    }
