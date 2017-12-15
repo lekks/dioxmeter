@@ -190,6 +190,26 @@ static void dump(int ppm,unsigned long period,unsigned long imp,unsigned int cnt
   Serial.println(buf);
 }
 
+
+struct PlotPoint {
+  uint8_t val;
+  uint8_t min;
+  uint8_t max;
+};
+
+class PlotPoints {
+  PlotPoint queue[320];
+public:
+  PlotPoint get(int i) {
+    return queue[i];
+  }
+  void put(PlotPoint &p) {
+    queue[0]=p;
+  }
+};
+
+PlotPoints pts;
+
 void loop(void) {
   static unsigned int _cnt;
   
@@ -218,6 +238,8 @@ void loop(void) {
       ppm_printer.print(ppm,color);
       plotter.plot(ppm,color);
       _ppm = ppm;
+      PlotPoint p={12};
+      pts.put(p);
     }
 
     unsigned long current_time = millis();
