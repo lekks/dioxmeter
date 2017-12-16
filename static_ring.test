@@ -1,0 +1,77 @@
+//============================================================================
+// Name        : static_ring.cpp
+// Author      : 
+// Version     :
+// Copyright   : Your copyright notice
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <iostream>
+#include <assert.h>
+#include "static_ring.hpp"
+using namespace std;
+
+typedef StaticRing<int,unsigned char,5> TestRing;
+
+void dump(const TestRing &buf) {
+	for(int i=0;i<buf.get_size();i++) {
+		const int* v=buf.get(i);
+		if(v != 0) {
+			assert(i<buf.get_used());
+			std::cout<<*v<<' ';
+		} else {
+			assert(i>=buf.get_used());
+		}
+	}
+	std::cout<<std::endl;
+}
+
+int main() {
+	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
+	TestRing ring;
+	assert(ring.get_size()==5);
+	assert(ring.get_used()==0);
+	assert(ring.get_free()==5);
+	assert(ring.drop(1) == false);
+
+	for(int i = 1;i<= 5;i++) {
+		assert(ring.put(i));
+		assert(ring.get_free()==5-i);
+		assert(ring.get_used()==i);
+		dump(ring);
+	}
+
+	assert(ring.put(6) == false);
+	assert(ring.get_used()==5);
+	dump(ring);
+
+	assert(ring.drop(1) == true);
+	assert(ring.get_used()==4);
+	dump(ring);
+
+	assert(ring.put(6) == true);
+	assert(ring.get_used()==5);
+	dump(ring);
+
+	for(int i = 7;i<= 14;i++) {
+		ring.push(i);
+		assert(ring.get_used()==5);
+		dump(ring);
+	}
+
+	assert(ring.drop(2) == true);
+	assert(ring.get_used()==3);
+	dump(ring);
+
+	assert(ring.put(15) == true);
+	assert(ring.get_used()==4);
+	dump(ring);
+
+	for(int i = 16 ;i<= 20;i++) {
+		ring.push(i);
+		assert(ring.get_used()==5);
+		dump(ring);
+	}
+
+	return 0;
+}

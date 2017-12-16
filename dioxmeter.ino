@@ -3,6 +3,7 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include "static_ring.hpp"
 
 #define LCD_CS A3 // Chip Select goes to Analog 3
 #define LCD_CD A2 // Command/Data goes to Analog 2
@@ -114,6 +115,12 @@ static float alarm_color(int16_t ppm)
     return r_min + (ppm-min)*(r_max-r_min)/(max-min);
 }
 
+struct PlotPoint {
+  uint8_t val;
+  uint8_t min;
+  uint8_t max;
+};
+
 class Plotter {
     const int16_t min=400;
     const int16_t max=2000;
@@ -122,6 +129,8 @@ class Plotter {
     const int16_t xmin=300;
     const int16_t xmax=319;
     const int16_t ymax=240;
+
+    StaticRing<PlotPoint,uint16_t,300> pts;
 public:
   int16_t ypos (int16_t ppm) {
       if (ppm<=min)return pos_min;
@@ -190,26 +199,6 @@ static void dump(int ppm,unsigned long period,unsigned long imp,unsigned int cnt
   Serial.println(buf);
 }
 
-
-struct PlotPoint {
-  uint8_t val;
-  uint8_t min;
-  uint8_t max;
-};
-
-class PlotPoints {
-  PlotPoint queue[320];
-public:
-  PlotPoint get(int i) {
-    return queue[i];
-  }
-  void put(PlotPoint &p) {
-    queue[0]=p;
-  }
-};
-
-PlotPoints pts;
-
 void loop(void) {
   static unsigned int _cnt;
   
@@ -239,7 +228,6 @@ void loop(void) {
       plotter.plot(ppm,color);
       _ppm = ppm;
       PlotPoint p={12};
-      pts.put(p);
     }
 
     unsigned long current_time = millis();
