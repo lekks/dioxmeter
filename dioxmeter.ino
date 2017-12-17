@@ -340,7 +340,7 @@ void loop(void) {
         next_plot_time = current_time;
       } else 
         heated = true;
-    } else if( current_time >= next_plot_time) {
+    } else if( current_time >= next_plot_time && stat.valid() ) {
       //dump(stat.get_mean(),stat.get_min(),stat.get_max());
       plotter.add(ppm2compr(stat.get_mean()),ppm2compr(stat.get_min()),ppm2compr(stat.get_max()));
       plotter.plot();  
