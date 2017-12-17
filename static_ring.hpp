@@ -16,9 +16,9 @@ class StaticRing {
 public:
 	StaticRing():used(0),tail(0){};
 
-	ndx_t get_used() const {return used;}
-	ndx_t get_size() const {return SIZE;}
-	ndx_t get_free() const {return SIZE-used;}
+	inline ndx_t get_used() const {return used;}
+	inline ndx_t get_size() const {return SIZE;}
+	inline ndx_t get_free() const {return SIZE-used;}
 
 	const T* get(ndx_t i) const {
 		if (i < used) {
