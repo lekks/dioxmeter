@@ -315,6 +315,7 @@ void loop(void) {
   tft.print("ppm");
  
   unsigned long next_plot_time = millis()+PLOT_DELAY;
+  bool heated = false;
   int ppm = 0;
   Stat stat;
   plotter.plot();  
@@ -333,11 +334,13 @@ void loop(void) {
     }
 
     unsigned long current_time = millis();
-    if(current_time < HEATING_DELAY ) {
-      stat.reset();
-      next_plot_time = current_time;
-    } else 
-    if(current_time >= next_plot_time) {
+    if(!heated) {
+      if ( current_time < HEATING_DELAY ) {
+        stat.reset();
+        next_plot_time = current_time;
+      } else 
+        heated = true;
+    } else if( current_time >= next_plot_time) {
       //dump(stat.get_mean(),stat.get_min(),stat.get_max());
       plotter.add(ppm2compr(stat.get_mean()),ppm2compr(stat.get_min()),ppm2compr(stat.get_max()));
       plotter.plot();  
