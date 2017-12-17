@@ -23,24 +23,26 @@
 #define MAGENTA 0xF81F
 #define YELLOW  0xFFE0
 #define WHITE   0xFFFF
+#define BROWN   0x8000
 
 unsigned long PLOT_DELAY=60000;
+unsigned long HEATING_DELAY=180000;
 
 TftSpfd5408 tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
 template <const int16_t smin,const int16_t smax,const int16_t cmin,const int16_t cmax>
 class Transform {  
 public:
-  int16_t operator() (int16_t s) {
+  int16_t operator() (int16_t s) const {
       if (s<=smin)return cmin;
       if (s>=smax)return cmax;
       return cmin+(int32_t)(s-smin)*(cmax-cmin)/(smax-smin);
   }
 };
 
-static Transform <400,2000,0,255>ppm2compr;
-static Transform <-100,2000,0,255>ppm2color;
-static Transform <0,255,60,255>compr2color;
+static const Transform <400,2000,0,255>ppm2compr;
+static const Transform <-100,2000,0,255>ppm2color;
+static const Transform <0,255,60,255>compr2color;
 
 class Stat {
   uint16_t cnt;
@@ -174,9 +176,9 @@ class Plotter {
     static const int16_t yres=240;
     static const int16_t ymin=0;
     static const int16_t ymax=180;
+    static const int16_t pmin=(ymax-ymin)*400L/2000+ymin;
 
-    Transform<400,2000,ymin,ymax> ppm2coord;
-    Transform<0,255,ymin,ymax> comr2coord;
+    static const Transform<0,255,pmin,ymax> comr2coord;
     
     StaticRing<PlotPoint,uint16_t,320> pts;
     
@@ -189,20 +191,31 @@ public:
   void plot_compr_point(int x,const PlotPoint& p) {
     int yp=comr2coord(p.mean);
     uint16_t color=gr_gradient(compr2color(p.mean));
-    
+
     tft.drawLine(x, yres-yp-1, x, yres-ymax, BLACK);
     tft.drawLine(x, yres-ymin, x, yres-yp, color);
+    //Much faster, but artifats seen
+//    tft.drawFastVLine(x, yres-ymax, ymax-yp-1, BLACK);
+//    tft.drawFastVLine(x, yres-yp, yres-yp-1, color);
   }
 
   void draw_box() {
     tft.drawLine(xstart, yres-ymax-1, xend-1, yres-ymax-1, BLUE);
     tft.setTextSize(1);  
-    tft.setTextColor(YELLOW);  
+    tft.setTextColor(CYAN);  
     tft.setCursor(xend-46,yres-ymax-10);
     tft.print("2000ppm");
 
     tft.setCursor(xstart+1,yres-ymin-10);
     tft.print("5h:20min");
+
+    for (int x=0;x<xend;x++) {
+      int i = x-xend;
+      if(i%60 == 0) {
+          tft.drawFastVLine(x, yres-ymax-1, ymax-ymin-1, BROWN);
+      }
+    }
+
   }
 
   void plot() {
@@ -293,7 +306,14 @@ void loop(void) {
   //testColors();
   char buf[64];
 
-  TftPrint ppm_printer(20,0,8);
+  TftPrint ppm_printer(80,0,8);
+  tft.setTextSize(3);  
+  tft.setTextColor(GREEN);  
+  tft.setCursor(5,2);
+  tft.print("CO2");
+  tft.setCursor(5,24);
+  tft.print("ppm");
+ 
   unsigned long next_plot_time = millis()+PLOT_DELAY;
   int ppm = 0;
   Stat stat;
@@ -313,6 +333,10 @@ void loop(void) {
     }
 
     unsigned long current_time = millis();
+    if(current_time < HEATING_DELAY ) {
+      stat.reset();
+      next_plot_time = current_time;
+    } else 
     if(current_time >= next_plot_time) {
       //dump(stat.get_mean(),stat.get_min(),stat.get_max());
       plotter.add(ppm2compr(stat.get_mean()),ppm2compr(stat.get_min()),ppm2compr(stat.get_max()));
