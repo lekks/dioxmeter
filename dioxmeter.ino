@@ -1,5 +1,3 @@
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <TftSpfd5408.h> // Hardware-specific library
 
 #include <limits.h>
 #include <stdio.h>
@@ -7,12 +5,20 @@
 
 #include "static_ring.hpp"
 
-#define LCD_CS A3 // Chip Select goes to Analog 3
-#define LCD_CD A2 // Command/Data goes to Analog 2
-#define LCD_WR A1 // LCD Write goes to Analog 1
-#define LCD_RD A0 // LCD Read goes to Analog 0
+#include <Adafruit_GFX.h>    // Core graphics library
 
-#define LCD_RESET A4 // Can alternately just connect to Arduino's reset pin
+//#define LCD_CS A3 // Chip Select goes to Analog 3
+//#define LCD_CD A2 // Command/Data goes to Analog 2
+//#define LCD_WR A1 // LCD Write goes to Analog 1
+//#define LCD_RD A0 // LCD Read goes to Analog 0
+//
+//#define LCD_RESET A4 // Can alternately just connect to Arduino's reset pin
+//#include <TftSpfd5408.h> // Hardware-specific library
+
+#include <MCUFRIEND_kbv.h>
+MCUFRIEND_kbv tft;
+#define TFT_ID 0x9341
+#define TFT_ROTATE 3
 
 // Assign human-readable names to some common 16-bit color values:
 #define	BLACK   0x0000
@@ -27,8 +33,6 @@
 
 unsigned long PLOT_DELAY=60000;
 unsigned long HEATING_DELAY=180000;
-
-TftSpfd5408 tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
 template <const int16_t smin,const int16_t smax,const int16_t cmin,const int16_t cmax>
 class Transform {  
@@ -128,8 +132,8 @@ static void setup_pcint()
 static void setup_display()
 {
   tft.reset();
-  tft.begin(0x9341); // SDFP5408
-  tft.setRotation(1); // Need for the Mega, please changed for your choice or rotation initial
+  tft.begin(TFT_ID); 
+  tft.setRotation(TFT_ROTATE);
 }
 
 
