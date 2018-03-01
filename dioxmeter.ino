@@ -204,11 +204,12 @@ public:
   }
 
   void draw_box() {
-    tft.drawLine(xstart, yres-ymax-1, xend-1, yres-ymax-1, BLUE);
     tft.setTextSize(1);  
     tft.setTextColor(CYAN);  
+    tft.drawLine(xstart, yres-ymax-1, xend-1, yres-ymax-1, BLUE);
     tft.setCursor(xend-46,yres-ymax-10);
     tft.print("2000ppm");
+    tft.drawLine(xstart, yres-ymax/2-1, xend-1, yres-ymax/2-1, BROWN);
 
     tft.setCursor(xstart+1,yres-ymin-10);
     tft.print("5h:20min");
@@ -216,7 +217,7 @@ public:
     for (int x=0;x<xend;x++) {
       int i = x-xend;
       if(i%60 == 0) {
-          tft.drawFastVLine(x, yres-ymax-1, ymax-ymin-1, BROWN);
+          tft.drawFastVLine(x, yres-ymax, ymax-ymin, BROWN);
       }
     }
 
