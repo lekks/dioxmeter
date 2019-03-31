@@ -5,7 +5,17 @@
 
 #include "static_ring.hpp"
 
+#define DHTPIN 10     // Digital pin connected to the DHT sensor
+#define DHTTYPE DHT11   // DHT 11
+//#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+
 #include <Adafruit_GFX.h>    // Core graphics library
+
+#ifdef DHTPIN
+#include "DHT.h"
+DHT dht(DHTPIN, DHTTYPE);
+#endif
+
 
 /*
 #define LCD_CS A3 // Chip Select goes to Analog 3
@@ -35,6 +45,8 @@ MCUFRIEND_kbv tft;
 
 unsigned long PLOT_DELAY=60000;
 unsigned long HEATING_DELAY=180000;
+unsigned long DHT_DELAY=10000;
+
 
 template <const int16_t smin,const int16_t smax,const int16_t cmin,const int16_t cmax>
 class Transform {  
@@ -125,7 +137,7 @@ public:
 
 static void setup_pcint()
 {
-  DDRC &= ~_BV(PC5);
+  DDRC &= ~_BV(PC5); //AIN
   //PORTC |= _BV(PC5);
   PCMSK1 |= _BV(PCINT13);
   PCICR |= _BV(PCIE1);
@@ -144,6 +156,9 @@ void setup(void) {
   Serial.println("Hello!");
   setup_display();
   setup_pcint();
+#ifdef DHTPIN
+  dht.begin();
+#endif
 }
 
 static inline uint16_t RGB(uint8_t r,uint8_t g,uint8_t b) {
@@ -310,10 +325,19 @@ void loop(void) {
 
   static unsigned int _cnt;  
   static int _ppm;
+  static float _tempr=NAN;
+  static float _hum=NAN;
   //testColors();
   char buf[64];
+  char float_buf[16];
 
+#ifdef DHTPIN
+  TftPrint ppm_printer(65,5,5);
+  TftPrint tmpr_printer(190,0,3);
+  TftPrint hum_printer(190,25,3);
+#else
   TftPrint ppm_printer(80,0,8);
+#endif
   tft.setTextSize(3);  
   tft.setTextColor(GREEN);  
   tft.setCursor(5,2);
@@ -322,8 +346,13 @@ void loop(void) {
   tft.print("ppm");
  
   unsigned long next_plot_time = millis()+PLOT_DELAY;
+  unsigned long next_dht_time = millis()+DHT_DELAY;
   bool heated = false;
+  
   int ppm = 0;
+  float tempr=NAN;
+  float hum=NAN;
+  
   Stat stat;
   plotter.plot();  
   for (;;) {
@@ -339,7 +368,24 @@ void loop(void) {
       ppm_printer.print(buf,color);
       _ppm = ppm;
     }
-
+#ifdef DHTPIN
+    if(_tempr != tempr) {
+      if (!isnan(tempr)) {
+        dtostrf(tempr, 3, 1, float_buf);
+        sprintf(buf,"t=%sC",float_buf);
+        tmpr_printer.print(buf,WHITE);        
+      }
+      _tempr = tempr;
+    }
+    if(_hum != hum) {
+      if (!isnan(hum)) {
+        dtostrf(hum, 3, 1, float_buf);
+        sprintf(buf,"H=%s%%",float_buf);
+        hum_printer.print(buf,WHITE);        
+      }
+      _hum = hum;
+    }
+#endif
     unsigned long current_time = millis();
     if(!heated) {
       if ( current_time < HEATING_DELAY ) {
@@ -354,6 +400,13 @@ void loop(void) {
       stat.reset();
       next_plot_time+=PLOT_DELAY;
     }
+#ifdef DHTPIN
+    if( DHT_DELAY && current_time >= next_dht_time ) {
+      hum = dht.readHumidity();
+      tempr = dht.readTemperature();
+      next_dht_time += DHT_DELAY;
+    }
+#endif
     //test_plot();
    }
 }
