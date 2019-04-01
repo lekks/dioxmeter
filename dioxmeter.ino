@@ -1,21 +1,13 @@
 
+#include "config.h"
+
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+#include <Adafruit_GFX.h>    // Core graphics library
+#include <MCUFRIEND_kbv.h>
 
 #include "static_ring.hpp"
-
-#define DHTPIN 10     // Digital pin connected to the DHT sensor
-#define DHTTYPE DHT11   // DHT 11
-//#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
-
-#include <Adafruit_GFX.h>    // Core graphics library
-
-#ifdef DHTPIN
-#include "DHT.h"
-DHT dht(DHTPIN, DHTTYPE);
-#endif
-
 
 /*
 #define LCD_CS A3 // Chip Select goes to Analog 3
@@ -27,10 +19,12 @@ DHT dht(DHTPIN, DHTTYPE);
 #include <TftSpfd5408.h> // Hardware-specific library
 */
 
-#include <MCUFRIEND_kbv.h>
+#ifdef DHTPIN
+#include "DHT.h"
+DHT dht(DHTPIN, DHTTYPE);
+#endif
+
 MCUFRIEND_kbv tft;
-#define TFT_ID 0x9341
-#define TFT_ROTATE 1
 
 // Assign human-readable names to some common 16-bit color values:
 #define	BLACK   0x0000
@@ -356,7 +350,17 @@ void loop(void) {
   Stat stat;
   plotter.plot();  
   for (;;) {
+    unsigned long current_time = millis();
+
     if(_cnt != cnt) {
+#ifdef DHTPIN
+      //Right after measure of CO2, HDT may use software delay measurements and IRQ may occure
+      if( current_time >= next_dht_time ) {
+        hum = dht.readHumidity();
+        tempr = dht.readTemperature();
+        next_dht_time += DHT_DELAY;
+      }
+#endif
       ppm=calc_ppm(period,imp);
       stat.add(ppm);
       //dump(ppm,period,imp,cnt);
@@ -386,7 +390,6 @@ void loop(void) {
       _hum = hum;
     }
 #endif
-    unsigned long current_time = millis();
     if(!heated) {
       if ( current_time < HEATING_DELAY ) {
         stat.reset();
@@ -400,13 +403,6 @@ void loop(void) {
       stat.reset();
       next_plot_time+=PLOT_DELAY;
     }
-#ifdef DHTPIN
-    if( DHT_DELAY && current_time >= next_dht_time ) {
-      hum = dht.readHumidity();
-      tempr = dht.readTemperature();
-      next_dht_time += DHT_DELAY;
-    }
-#endif
     //test_plot();
    }
 }
