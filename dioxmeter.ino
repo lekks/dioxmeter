@@ -1,4 +1,4 @@
-
+#define VER "1.3"
 #include "config.h"
 
 #include <limits.h>
@@ -8,6 +8,8 @@
 #include <MCUFRIEND_kbv.h>
 
 #include "static_ring.hpp"
+
+#define MAX_STRING_LENGHT 32 //Doesn`t work with big values, I can`t understand why
 
 /*
 #define LCD_CS A3 // Chip Select goes to Analog 3
@@ -41,6 +43,7 @@ unsigned long PLOT_DELAY=60000;
 unsigned long HEATING_DELAY=180000;
 unsigned long DHT_DELAY=10000;
 
+char str_buf[MAX_STRING_LENGHT+1];
 
 template <const int16_t smin,const int16_t smax,const int16_t cmin,const int16_t cmax>
 class Transform {  
@@ -128,6 +131,24 @@ public:
 
 };
 
+int  makeNmeaSentense(char* buffer, int size, const char * sentense, ...)
+{
+  int ret;
+  if (*sentense != '$') return -1;
+  va_list arg; 
+  va_start(arg, sentense);
+  ret = vsnprintf(buffer, size, sentense,arg);
+  va_end(arg);
+  if(buffer[ret-1] != '*') return -1;
+  if(ret+5>size) return -1;
+  unsigned char crc=0;
+  char *data = buffer+1;
+  while (*data && *data!='*') {
+    crc ^=*data++;
+  }
+  ret+=snprintf(&buffer[ret],5,"%02X\r\n",crc);
+  return ret;
+}
 
 static void setup_pcint()
 {
@@ -147,7 +168,6 @@ static void setup_display()
 
 void setup(void) {
   Serial.begin(9600);
-  Serial.println("Hello!");
   setup_display();
   setup_pcint();
 #ifdef DHTPIN
@@ -294,16 +314,14 @@ SIGNAL(PCINT1_vect) //PCINT13 PC5 ADC5
 
 static void dump(int ppm,unsigned long period,unsigned long imp,unsigned int cnt)
 {
-  char buf[128];
-  sprintf(buf,"%d:%lu/%lu/%u",ppm,period,imp,cnt);
-  Serial.println(buf);
+  sprintf(str_buf,"%d:%lu/%lu/%u",ppm,period,imp,cnt);
+  Serial.println(str_buf);
 }
 
 static void dump(int mean,int min, int max)
 {
-  char buf[128];
-  sprintf(buf,"%d:%d-%du",mean,min,max);
-  Serial.println(buf);
+  sprintf(str_buf,"%d:%d-%du",mean,min,max);
+  Serial.println(str_buf);
 }
 
 Plotter plotter;
@@ -314,21 +332,30 @@ void test_plot(){
   plotter.plot();  
 }
 
+void dump_nmea_value(const char* name, int value) {
+  makeNmeaSentense(str_buf,MAX_STRING_LENGHT,"$%s,%d*",name,value);
+  Serial.print(str_buf);
+}
+
+void dump_nmea_value(const char* name, const char* value) {
+  makeNmeaSentense(str_buf,MAX_STRING_LENGHT,"$%s,%s*",name,value);
+  Serial.print(str_buf);
+}
+
+char msg_buf[MAX_STRING_LENGHT];
 void loop(void) {
+  dump_nmea_value("VER",VER);
   tft.fillScreen(BLACK);
 
   static unsigned int _cnt;  
   static int _ppm;
-  static float _tempr=NAN;
-  static float _hum=NAN;
+  static int _hum=-1;
   //testColors();
-  char buf[64];
-  char float_buf[16];
+  char buf[32];
 
 #ifdef DHTPIN
-  TftPrint ppm_printer(65,5,5);
-  TftPrint tmpr_printer(190,0,3);
-  TftPrint hum_printer(190,25,3);
+  TftPrint ppm_printer(65,5,6);
+  TftPrint hum_printer(220,15,3);
 #else
   TftPrint ppm_printer(80,0,8);
 #endif
@@ -344,8 +371,7 @@ void loop(void) {
   bool heated = false;
   
   int ppm = 0;
-  float tempr=NAN;
-  float hum=NAN;
+  int hum=-1;
   
   Stat stat;
   plotter.plot();  
@@ -356,8 +382,10 @@ void loop(void) {
 #ifdef DHTPIN
       //Right after measure of CO2, HDT may use software delay measurements and IRQ may occure
       if( current_time >= next_dht_time ) {
-        hum = dht.readHumidity();
-        tempr = dht.readTemperature();
+        float hm = dht.readHumidity();
+        if(isnan(hm))
+          dump_nmea_value("ERR","ERR_HUM");
+        hum = isnan(hm)? -1: int(hm+0.5);
         next_dht_time += DHT_DELAY;
       }
 #endif
@@ -368,24 +396,17 @@ void loop(void) {
     }
     if(_ppm != ppm) {
       uint16_t color=gr_gradient(ppm2color(ppm));
-      sprintf(buf,"%d",ppm);
-      ppm_printer.print(buf,color);
+      sprintf(str_buf,"%d",ppm);
+      ppm_printer.print(str_buf,color);
+      dump_nmea_value("CO2",ppm);
       _ppm = ppm;
     }
 #ifdef DHTPIN
-    if(_tempr != tempr) {
-      if (!isnan(tempr)) {
-        dtostrf(tempr, 3, 1, float_buf);
-        sprintf(buf,"t=%sC",float_buf);
-        tmpr_printer.print(buf,WHITE);        
-      }
-      _tempr = tempr;
-    }
     if(_hum != hum) {
-      if (!isnan(hum)) {
-        dtostrf(hum, 3, 1, float_buf);
-        sprintf(buf,"H=%s%%",float_buf);
-        hum_printer.print(buf,WHITE);        
+      if (hum >= 0) {
+        sprintf(str_buf,"H=%i%%",hum);
+        hum_printer.print(str_buf,WHITE);        
+        dump_nmea_value("HUM",hum);
       }
       _hum = hum;
     }
