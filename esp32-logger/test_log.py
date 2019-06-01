@@ -1,5 +1,5 @@
 import unittest
-from influxlog import parce_line, InfluxWriter
+from influxlog import parse_nmea, InfluxWriter
 
 
 class TestParser(unittest.TestCase):
@@ -9,13 +9,13 @@ class TestParser(unittest.TestCase):
         expect = [("VER", "1.3"), ("CO2", "410"), ("CO2", "409"), ("HUM", "33"), ("CO2", "395"), ("CO2", "410"),
                   ("HUM", "32")]
         for line, exp in zip(lines, expect):
-            res = tuple(parce_line(line))
+            res = parse_nmea(line)
             self.assertEqual(res, exp)
 
     def test_parse_neg(self):
         lines = ["VER,1.3*41", "$CO2,410*28", "$CO2,4092F", "$HUM,43*7C"]
         for line in lines:
-            res = parce_line(line)
+            res = parse_nmea(line)
             self.assertIsNone(res)
 
 
@@ -28,6 +28,10 @@ class TestInflux(unittest.TestCase):
     def test_nnoags(self):
         res = InfluxWriter._influx_notime("hut_env", {"tempr": 12, "hum": 24})
         self.assertEqual(res, "hut_env tempr=12,hum=24")
+
+    def test_post(self):
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()
