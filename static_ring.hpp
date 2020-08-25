@@ -1,10 +1,3 @@
-/*
- * static_ring.hpp
- *
- *  Created on: 16 ���. 2017 �.
- *      Author: ldir
- */
-
 #ifndef STATIC_RING_HPP_
 #define STATIC_RING_HPP_
 
