@@ -238,7 +238,8 @@ public:
 	  stat.reset();
 	}
 
-	void update(int ppm, bool valid) {
+	void update(const Measurment& measurement) {
+		const int ppm = measurement.value;
 		//testColors();
 		//dump(ppm,period,imp,cnt);
 		if (_ppm != ppm) {
@@ -249,7 +250,7 @@ public:
 			_ppm = ppm;
 		}
 
-		if (valid) {
+		if (measurement.valid) {
 			stat.add(ppm);
 			unsigned long current_time = millis();
 			if (current_time >= next_plot_time && stat.valid()) {

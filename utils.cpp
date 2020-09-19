@@ -1,3 +1,4 @@
+#include "utils.hpp"
 #include <limits.h>
 #include <stdio.h>
 
@@ -18,12 +19,6 @@ int makeNmeaSentense(char* buffer, int size, const char * sentense, ...)
   }
   ret+=snprintf(&buffer[ret],5,"%02X\r\n",crc);
   return ret;
-}
-
-int calc_ppm(unsigned long period,unsigned long imp, int MAX_PPM)
-{
-    int dead_time = period/251;
-    return MAX_PPM*(imp-dead_time/2)/(period-dead_time);
 }
 
 

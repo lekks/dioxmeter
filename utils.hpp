@@ -66,7 +66,6 @@ public:
   }
 };
 
-int calc_ppm(unsigned long period,unsigned long imp, int MAX_PPM);
 uint16_t RGB(uint8_t r,uint8_t g,uint8_t b);
 
 extern int makeNmeaSentense(char* buffer, int size, const char * sentense, ...);
