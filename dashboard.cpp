@@ -173,15 +173,6 @@ inline uint16_t RGB(uint8_t r,uint8_t g,uint8_t b) {
   return tft.color565(r,g,b);
 }
 
-static unsigned long time_diff(long unsigned time1, long unsigned time2)
-{
-  if(time2>=time2)
-    return time2-time1;
-  else
-    return (ULONG_MAX-time1)+time2+1;
-}
-
-
 static void dump(int ppm,unsigned long period,unsigned long imp,unsigned int cnt)
 {
   sprintf(str_buf,"%d:%lu/%lu/%u",ppm,period,imp,cnt);

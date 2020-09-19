@@ -1,6 +1,8 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
+#include <stdint.h>
+
 // Assign human-readable names to some common 16-bit color values:
 #define  BLACK   0x0000
 #define BLUE    0x001F
@@ -69,5 +71,6 @@ uint16_t RGB(uint8_t r,uint8_t g,uint8_t b);
 
 extern int makeNmeaSentense(char* buffer, int size, const char * sentense, ...);
 
+extern unsigned long time_diff(long unsigned time1, long unsigned time2);
 
 #endif /* UTILS_HPP_ */

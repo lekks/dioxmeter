@@ -1,3 +1,5 @@
+#include <limits.h>
+#include <stdio.h>
 
 int makeNmeaSentense(char* buffer, int size, const char * sentense, ...)
 {
@@ -22,4 +24,13 @@ int calc_ppm(unsigned long period,unsigned long imp, int MAX_PPM)
 {
     int dead_time = period/251;
     return MAX_PPM*(imp-dead_time/2)/(period-dead_time);
+}
+
+
+unsigned long time_diff(long unsigned time1, long unsigned time2)
+{
+  if(time2>=time2)
+    return time2-time1;
+  else
+    return (ULONG_MAX-time1)+time2+1;
 }

@@ -1,5 +1,6 @@
 #include "config.h"
 #include "dioxmeter.hpp"
+#include "utils.hpp"
 
 static volatile unsigned long period;
 static volatile unsigned long imp;
