@@ -65,11 +65,13 @@ bool measue_co2(Measurment &result) {
 	if (!heated && current_time > HEATING_DELAY) {
 		heated = true;
 	}
+	result.valid = heated;
 	if (_cnt != cnt) {
 		 ppm = calc_ppm(period, imp, 5000);
 		_cnt = cnt;
+		result.value = ppm;
+		return true;
+	} else {
+		return false;
 	}
-	result.valid = heated;
-	result.value = ppm;
-	return true;
 }

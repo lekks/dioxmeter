@@ -9,6 +9,7 @@ void setup(void) {
 
 void loop(void) {
 	static Measurment co2_ppm;
-	co2_ppm.valid = measue_co2(co2_ppm) && co2_ppm.valid;
-	dashboard_impl()->update(co2_ppm);
+	if (measue_co2(co2_ppm)) {
+		dashboard_impl()->update(co2_ppm);
+	}
 }
