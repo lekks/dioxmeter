@@ -3,6 +3,7 @@
 #include "named_colors.h"
 #include "utils.hpp"
 #include "static_ring.hpp"
+#include "tft_utils.hpp"
 
 #include <limits.h>
 #include <stdio.h>
@@ -121,45 +122,6 @@ public:
 
 };
 
-class TftLabel {
-	int x, y;
-	char sz;
-	bool printed;
-	char last[64];
-public:
-	TftLabel(int x, int y, char sz) :
-			x(x), y(y), sz(sz), printed(false) {
-	}
-	;
-	void clear() {
-		if (printed) {
-			tft.setCursor(x, y);
-			tft.setTextSize(sz);
-			tft.setTextColor(BLACK);
-			tft.print(last);
-			printed = false;
-		}
-	}
-
-	void print(const char *txt, uint16_t color) {
-		if (strcmp(txt, last) || !printed) {
-			clear();
-			tft.setCursor(x, y);
-			tft.setTextSize(sz);
-			tft.setTextColor(color);
-			tft.print(txt);
-			printed = true;
-			strcpy(last, txt);
-		}
-	}
-
-};
-
-static void setup_display() {
-	tft.reset();
-	tft.begin(TFT_ID);
-	tft.setRotation(TFT_ROTATE);
-}
 
 static void testColors() {
 	static Transform<0, 319, 0, 255> xtoc;
@@ -169,22 +131,20 @@ static void testColors() {
 	}
 }
 
-void dump(int ppm, unsigned long period, unsigned long imp, unsigned int cnt) {
-	sprintf(str_buf, "%d:%lu/%lu/%u", ppm, period, imp, cnt);
-	log_debug(str_buf);
-}
-
-static void dump(int mean, int min, int max) {
-	sprintf(str_buf, "%d:%d-%du", mean, min, max);
-	log_debug(str_buf);
-}
-
-Plotter plotter(tft);
 void test_plot() {
 	static uint8_t mock = 0;
 	plotter.add(mock, mock, mock);
 	mock++;
 	plotter.update();
+}
+
+static Plotter plotter(tft);
+static Stat stat;
+
+static void setup_display() {
+	tft.reset();
+	tft.begin(TFT_ID);
+	tft.setRotation(TFT_ROTATE);
 }
 
 void setup_ttf() {
@@ -200,8 +160,6 @@ void setup_ttf() {
 
 }
 
-static Stat stat;
-
 void setup_dashboard(void) {
 	setup_display();
 	setup_ttf();
@@ -210,7 +168,7 @@ void setup_dashboard(void) {
 }
 
 void update_dashboard(const Measurment &measurement) {
-	static TftLabel ppm_printer { 80, 0, 8 };
+	static TftLabel ppm_printer {tft, BLACK, 80, 0, 8 };
 	static unsigned long next_plot_time = millis() + PLOT_DELAY;
 	static int _ppm = -1;
 
