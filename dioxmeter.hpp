@@ -8,25 +8,21 @@
 #ifndef DIOXMETER_HPP_
 #define DIOXMETER_HPP_
 
+#define VER "1.3"
+
 struct Measurment {
 	int value;
 	bool valid;
 };
 
-
-class Dashboard {
-public:
-	virtual void setup(void){
-	}
-
-	virtual void update(const Measurment&)=0;
-
-	virtual ~Dashboard(){};
-};
-
-Dashboard* dashboard_impl();
-
 void setup_co2();
 bool measue_co2(Measurment&);
+
+void setup_dashboard(void);
+void update_dashboard(const Measurment& measurement);
+
+void setup_log(void);
+void log_measurement(const Measurment& measurement);
+void log_debug(const char*);
 
 #endif /* DIOXMETER_HPP_ */

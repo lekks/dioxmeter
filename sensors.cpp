@@ -10,6 +10,8 @@
 #include <Arduino.h>
 #include "utils.hpp"
 
+#define HEATING_DELAY 180000L
+
 static volatile unsigned long period;
 static volatile unsigned long imp;
 static volatile unsigned int cnt;

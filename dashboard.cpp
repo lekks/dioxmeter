@@ -1,8 +1,8 @@
-#define VER "1.3"
 #include "config.h"
-#include "utils.hpp"
-#include "plotter.hpp"
 #include "dioxmeter.hpp"
+#include "named_colors.h"
+#include "utils.hpp"
+#include "static_ring.hpp"
 
 #include <limits.h>
 #include <stdio.h>
@@ -12,9 +12,8 @@
 //#include <Fonts/FreeMonoBoldOblique12pt7b.h>
 //#include <Fonts/FreeSerif9pt7b.h>
 
-
-#define MAX_STRING_LENGHT 32 //Doesn`t work with big values, I can`t understand why
-
+const int MAX_SENSOR_VALUE=2000;
+const unsigned long PLOT_DELAY=60000;
 
 /*
 #define LCD_CS A3 // Chip Select goes to Analog 3
@@ -29,9 +28,9 @@
 MCUFRIEND_kbv tft;
 
 
-unsigned long PLOT_DELAY=60000;
 
-char str_buf[MAX_STRING_LENGHT+1];
+#define MAX_STRING_LENGHT 32 //Doesn`t work with big values, I can`t understand why
+static char str_buf[MAX_STRING_LENGHT+1];
 
 static const Transform <400,2000,0,255>ppm2compr;
 static const Transform <-100,2000,0,255>ppm2color;
@@ -176,13 +175,13 @@ inline uint16_t RGB(uint8_t r,uint8_t g,uint8_t b) {
 static void dump(int ppm,unsigned long period,unsigned long imp,unsigned int cnt)
 {
   sprintf(str_buf,"%d:%lu/%lu/%u",ppm,period,imp,cnt);
-  Serial.println(str_buf);
+  log_debug(str_buf);
 }
 
 static void dump(int mean,int min, int max)
 {
   sprintf(str_buf,"%d:%d-%du",mean,min,max);
-  Serial.println(str_buf);
+  log_debug(str_buf);
 }
 
 Plotter plotter(tft);
@@ -193,19 +192,7 @@ void test_plot(){
   plotter.plot();  
 }
 
-void dump_nmea_value(const char* name, int value) {
-  makeNmeaSentense(str_buf,MAX_STRING_LENGHT,"$%s,%d*",name,value);
-  Serial.print(str_buf);
-}
-
-void dump_nmea_value(const char* name, const char* value) {
-  makeNmeaSentense(str_buf,MAX_STRING_LENGHT,"$%s,%s*",name,value);
-  Serial.print(str_buf);
-}
-
-
 void setup_ttf(){
-  dump_nmea_value("VER",VER);
   tft.fillScreen(BLACK);
 
   //  tft.setFont(&FreeMonoBoldOblique12pt7b);
@@ -219,59 +206,44 @@ void setup_ttf(){
 }
 
 
-class DashboardImpl: public Dashboard {
-	TftPrint ppm_printer{80,0,8};
-	unsigned long next_plot_time = millis()+PLOT_DELAY;
-	int _ppm=-1;
+static Stat stat;
 
-
-	Stat stat;
-
-	DashboardImpl() {
-
-	}
-public:
-	void setup(void) {
-	  setup_display();
-	  setup_ttf();
-	  plotter.plot();
-	  stat.reset();
-	}
-
-	void update(const Measurment& measurement) {
-		const int ppm = measurement.value;
-		//testColors();
-		//dump(ppm,period,imp,cnt);
-		if (_ppm != ppm) {
-			uint16_t color = gr_gradient(ppm2color(ppm));
-			sprintf(str_buf, "%d", ppm);
-			ppm_printer.print(str_buf, color);
-			dump_nmea_value("CO2", ppm);
-			_ppm = ppm;
-		}
-
-		if (measurement.valid) {
-			stat.add(ppm);
-			unsigned long current_time = millis();
-			if (current_time >= next_plot_time && stat.valid()) {
-				//dump(stat.get_mean(),stat.get_min(),stat.get_max());
-				plotter.add(ppm2compr(stat.get_mean()), ppm2compr(stat.get_min()),
-						ppm2compr(stat.get_max()));
-				plotter.plot();
-				stat.reset();
-				next_plot_time += PLOT_DELAY;
-			}
-		} else {
-     		stat.reset();
-		}
-		//test_plot();
-	}
-
-	friend Dashboard* dashboard_impl();
-};
-
-
-Dashboard* dashboard_impl() {
-	static DashboardImpl dashboard;
-	return &dashboard;
+void setup_dashboard(void) {
+  setup_display();
+  setup_ttf();
+  plotter.plot();
+  stat.reset();
 }
+
+void update_dashboard(const Measurment& measurement) {
+	static TftPrint ppm_printer{80,0,8};
+	static unsigned long next_plot_time = millis()+PLOT_DELAY;
+	static int _ppm=-1;
+
+	const int ppm = measurement.value;
+	//testColors();
+	//dump(ppm,period,imp,cnt);
+	if (_ppm != ppm) {
+		uint16_t color = gr_gradient(ppm2color(ppm));
+		sprintf(str_buf, "%d", ppm);
+		ppm_printer.print(str_buf, color);
+		_ppm = ppm;
+	}
+
+	if (measurement.valid) {
+		stat.add(ppm);
+		unsigned long current_time = millis();
+		if (current_time >= next_plot_time && stat.valid()) {
+			//dump(stat.get_mean(),stat.get_min(),stat.get_max());
+			plotter.add(ppm2compr(stat.get_mean()), ppm2compr(stat.get_min()),
+					ppm2compr(stat.get_max()));
+			plotter.plot();
+			stat.reset();
+			next_plot_time += PLOT_DELAY;
+		}
+	} else {
+		stat.reset();
+	}
+	//test_plot();
+}
+
