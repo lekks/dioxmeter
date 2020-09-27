@@ -55,7 +55,6 @@ public:
   }
 };
 
-uint16_t RGB(uint8_t r,uint8_t g,uint8_t b);
 
 extern unsigned long time_diff(long unsigned time1, long unsigned time2);
 
