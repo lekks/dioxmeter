@@ -1,5 +1,5 @@
 #include "config.h"
-#include "dioxmeter.hpp"
+#include "dashboard.hpp"
 #include "named_colors.h"
 #include "utils.hpp"
 #include "static_ring.hpp"
@@ -122,6 +122,9 @@ public:
 
 };
 
+static Plotter plotter(tft);
+static Stat stat;
+
 
 static void testColors() {
 	static Transform<0, 319, 0, 255> xtoc;
@@ -131,15 +134,13 @@ static void testColors() {
 	}
 }
 
+
 void test_plot() {
 	static uint8_t mock = 0;
 	plotter.add(mock, mock, mock);
 	mock++;
 	plotter.update();
 }
-
-static Plotter plotter(tft);
-static Stat stat;
 
 static void setup_display() {
 	tft.reset();
@@ -167,23 +168,25 @@ void setup_dashboard(void) {
 	stat.reset();
 }
 
-void update_dashboard(const Measurment &measurement) {
+void print_label(int ppm) {
 	static TftLabel ppm_printer {tft, BLACK, 80, 0, 8 };
-	static unsigned long next_plot_time = millis() + PLOT_DELAY;
 	static int _ppm = -1;
 
-	const int ppm = measurement.value;
-	//testColors();
-	//dump(ppm,period,imp,cnt);
 	if (_ppm != ppm) {
 		uint16_t color = gr_gradient(ppm2color(ppm));
 		sprintf(str_buf, "%d", ppm);
 		ppm_printer.print(str_buf, color);
 		_ppm = ppm;
 	}
+}
+
+void update_dashboard(const Measurment &measurement) {
+	static unsigned long next_plot_time = millis() + PLOT_DELAY;
+
+	print_label(measurement.value);
 
 	if (measurement.valid) {
-		stat.add(ppm);
+		stat.add(measurement.value);
 		unsigned long current_time = millis();
 		if (current_time >= next_plot_time && stat.valid()) {
 			//dump(stat.get_mean(),stat.get_min(),stat.get_max());

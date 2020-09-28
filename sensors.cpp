@@ -6,7 +6,7 @@
  */
 
 #include "config.h"
-#include "dioxmeter.hpp"
+#include "sensor.hpp"
 #include <Arduino.h>
 #include "utils.hpp"
 

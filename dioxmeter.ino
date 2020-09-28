@@ -1,5 +1,8 @@
 #include "config.h"
 #include "dioxmeter.hpp"
+#include "sensor.hpp"
+#include "dashboard.hpp"
+#include "logging.hpp"
 
 void setup(void) {
 	setup_log();
