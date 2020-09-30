@@ -30,7 +30,6 @@ MCUFRIEND_kbv tft;
 
 #define MAX_STRING_LENGHT 32 //Doesn`t work with big values, I can`t understand why
 static char str_buf[MAX_STRING_LENGHT + 1];
-
 static const Transform<400, 2000, 0, 255> ppm2compr;
 static const Transform<-100, 2000, 0, 255> ppm2color;
 
@@ -38,7 +37,7 @@ static inline uint16_t RGB(uint8_t r, uint8_t g, uint8_t b) {
 	return tft.color565(r, g, b);
 }
 
-static uint16_t gr_gradient(uint8_t x) {
+static uint16_t palette_8bit(uint8_t x) {
 	uint16_t c = x * 2;
 	if (c < 256)
 		return RGB(c, 255, 0);
@@ -48,12 +47,9 @@ static uint16_t gr_gradient(uint8_t x) {
 		return RGB(255, 255, 255);
 }
 
+
 class Plotter {
-	struct PlotPoint {
-		uint8_t mean;
-		uint8_t min;
-		uint8_t max;
-	};
+
 	Adafruit_GFX &tft;
 	static const int16_t xstart = 0;
 	static const int16_t xend = 320;
@@ -64,22 +60,15 @@ class Plotter {
 
 	static const Transform<0, 255, pmin, ymax> comr2coord;
 	static const Transform<0, 255, 60, 255> compr2color;
+	static Averager stat;
 
+	typedef uint8_t PlotPoint;
 	StaticRing<PlotPoint, uint16_t, xend - xstart> pts;
 
-public:
-	Plotter(Adafruit_GFX &tft) :
-			tft(tft) {
-	}
-	;
-
-	void add(uint8_t mean, uint8_t min, uint8_t max) {
-		pts.push(PlotPoint { mean, min, max });
-	}
 
 	void plot_compr_point(int x, const PlotPoint &p) {
-		int yp = comr2coord(p.mean);
-		uint16_t color = gr_gradient(compr2color(p.mean));
+		int yp = comr2coord(p);
+		auto color = palette_8bit(compr2color(p));
 
 		tft.drawLine(x, yres - yp - 1, x, yres - ymax, BLACK);
 		tft.drawLine(x, yres - ymin, x, yres - yp, color);
@@ -109,27 +98,52 @@ public:
 
 	}
 
-	void update() {
-		int points = pts.get_used();
+	void draw_chart() {
 		for (int x = 0; x < xend; x++) {
 			int i = x - xend + pts.get_used();
 			if (i >= 0) {
 				plot_compr_point(x, *pts.get(i));
 			}
 		}
+	}
+
+
+public:
+	Plotter(Adafruit_GFX &tft) :
+			tft(tft) {
+		stat.reset();
+	}
+
+	void add_measuement(int16_t value) {
+		stat.add(value);
+	}
+
+	void mk_point() {
+		pts.push( ppm2compr(stat.get_mean()) );
+		stat.reset();
+		update();
+	}
+
+	void update() {
+		draw_chart();
 		draw_box();
 	}
 
+	bool valid() {
+		return stat.valid();
+	}
 };
 
+static Averager Plotter::stat;
+
+
 static Plotter plotter(tft);
-static Stat stat;
 
 
-static void testColors() {
+static void test_palette() {
 	static Transform<0, 319, 0, 255> xtoc;
 	for (int i = 0; i < 320; ++i) {
-		uint16_t c = gr_gradient(xtoc(i));
+		uint16_t c = palette_8bit(xtoc(i));
 		tft.drawFastVLine(i, 0, 20, c);
 	}
 }
@@ -137,9 +151,9 @@ static void testColors() {
 
 void test_plot() {
 	static uint8_t mock = 0;
-	plotter.add(mock, mock, mock);
+	plotter.add_measuement(mock);
 	mock++;
-	plotter.update();
+	plotter.mk_point();
 }
 
 static void setup_display() {
@@ -165,7 +179,6 @@ void setup_dashboard(void) {
 	setup_display();
 	setup_ttf();
 	plotter.update();
-	stat.reset();
 }
 
 void print_label(int ppm) {
@@ -173,7 +186,7 @@ void print_label(int ppm) {
 	static int _ppm = -1;
 
 	if (_ppm != ppm) {
-		uint16_t color = gr_gradient(ppm2color(ppm));
+		uint16_t color = palette_8bit(ppm2color(ppm));
 		sprintf(str_buf, "%d", ppm);
 		ppm_printer.print(str_buf, color);
 		_ppm = ppm;
@@ -186,19 +199,12 @@ void update_dashboard(const Measurment &measurement) {
 	print_label(measurement.value);
 
 	if (measurement.valid) {
-		stat.add(measurement.value);
+		plotter.add_measuement(measurement.value);
 		unsigned long current_time = millis();
-		if (current_time >= next_plot_time && stat.valid()) {
-			//dump(stat.get_mean(),stat.get_min(),stat.get_max());
-			plotter.add(ppm2compr(stat.get_mean()), ppm2compr(stat.get_min()),
-					ppm2compr(stat.get_max()));
-			plotter.update();
-			stat.reset();
+		if (current_time >= next_plot_time && plotter.valid()) {
+			plotter.mk_point();
 			next_plot_time += PLOT_DELAY;
 		}
-	} else {
-		stat.reset();
 	}
-	//test_plot();
 }
 

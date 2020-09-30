@@ -14,13 +14,13 @@ public:
   }
 };
 
-class Stat {
+class Averager {
   uint16_t cnt;
   int32_t accum;
   int16_t min;
   int16_t max;
 public:
-  Stat():cnt(0),accum(0){};
+  Averager():cnt(0),accum(0){};
   void reset() {
     cnt = 0;
     accum = 0;
