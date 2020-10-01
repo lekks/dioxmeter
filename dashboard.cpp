@@ -4,17 +4,17 @@
 #include "utils.hpp"
 #include "static_ring.hpp"
 #include "tft_utils.hpp"
-#include "chart.hpp"
 
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <MCUFRIEND_kbv.h>
+
+#include "chart.hpp"
 //#include <Fonts/FreeMonoBoldOblique12pt7b.h>
 //#include <Fonts/FreeSerif9pt7b.h>
 
-const int MAX_SENSOR_VALUE = 2000;
 const unsigned long PLOT_DELAY = 60000;
 
 /*
@@ -48,7 +48,7 @@ static uint16_t palette_8bit(uint8_t x) {
 
 
 
-static Chart plotter(tft, palette_8bit);
+static Chart1 plotter(tft, palette_8bit);
 
 
 static void test_palette() {
@@ -92,7 +92,7 @@ void setup_dashboard(void) {
 	plotter.update();
 }
 
-void print_label(int ppm) {
+void update_label(int ppm) {
 	static const Transform<-100, 2000, 0, 255> ppm2color;
 	static TftLabel ppm_printer {tft, BLACK, 80, 0, 8 };
 	static int _ppm = -1;
@@ -105,11 +105,8 @@ void print_label(int ppm) {
 	}
 }
 
-void update_dashboard(const Measurment &measurement) {
+void update_chart(const Measurment &measurement){
 	static unsigned long next_plot_time = millis() + PLOT_DELAY;
-
-	print_label(measurement.value);
-
 	if (measurement.valid) {
 		plotter.add_measuement(measurement.value);
 		unsigned long current_time = millis();
@@ -118,5 +115,12 @@ void update_dashboard(const Measurment &measurement) {
 			next_plot_time += PLOT_DELAY;
 		}
 	}
+}
+
+
+void update_dashboard(const Measurment &measurement) {
+
+	update_label(measurement.value);
+	update_chart(measurement);
 }
 
