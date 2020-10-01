@@ -8,25 +8,25 @@
 #ifndef CHART_HPP_
 #define CHART_HPP_
 
+#include "config.h"
 #include "utils.hpp"
 #include "named_colors.h"
 #include "static_ring.hpp"
 
 #include <Adafruit_GFX.h>    // Core graphics library
 
-const int MIN_SENSOR_VALUE = 400;
-const int MAX_SENSOR_VALUE = 2000;
 
 typedef uint16_t (*Palette)(uint8_t x);
 
 class ChartBase { // @suppress("Class has a virtual method and non-virtual destructor")
 protected:
-	static const int16_t xstart = 0;
-	static const int16_t xend = 320;
-	static const int16_t yres = 240;
+	static const int16_t xmin = 0;
+	static const int16_t xmax = DISPLAY_WIDTH_PX;
 	static const int16_t ymin = 0;
 	static const int16_t ymax = 180;
-	static const int16_t pmin = (ymax - ymin) * 400L / 2000 + ymin;
+
+	static const int16_t pmin = (ymax - ymin) * static_cast<long int>(MIN_SENSOR_VALUE)/ MAX_SENSOR_VALUE + ymin;
+	static const Transform<MIN_SENSOR_VALUE, MAX_SENSOR_VALUE, pmin, ymax> ppm2coord;
 
 	Adafruit_GFX &tft;
 
@@ -39,7 +39,7 @@ public:
 
 private:
 	Averager stat;
-	typedef StaticRing<uint8_t, uint16_t, xend - xstart> PointsBuffer;
+	typedef StaticRing<uint8_t, uint16_t, xmax - xmin> PointsBuffer;
 	static PointsBuffer pts;
 	static const Transform<MIN_SENSOR_VALUE, MAX_SENSOR_VALUE, 0, 255> ppm2compr;
 	static const Transform<0, 255, pmin, ymax> comr2coord;

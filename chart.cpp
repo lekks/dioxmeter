@@ -21,7 +21,6 @@ void ChartBase::add_measuement(int value) {
 void ChartBase::mk_point() {
 	pts.push(ppm2compr(stat.get_mean()));
 	stat.reset();
-	update();
 }
 
 void ChartBase::update() {
@@ -35,8 +34,8 @@ bool ChartBase::valid() {
 }
 void ChartBase::draw_chart() {
 	{
-		for (int x = 0; x < xend; x++) {
-			int i = x - xend + pts.get_used();
+		for (int x = xmin; x < xmax; x++) {
+			int i = x - xmax + pts.get_used();
 			if (i >= 0) {
 				uint8_t p = *pts.get(i);
 				plot_point(x, comr2coord(p),
@@ -49,20 +48,19 @@ void ChartBase::draw_chart() {
 void Chart1::draw_overlay() {
 	tft.setTextSize(1);
 	tft.setTextColor(CYAN);
-	tft.drawLine(xstart, yres - ymax - 1, xend - 1, yres - ymax - 1,
-			BORDER_TOP_COLOR);
-	tft.setCursor(xend - 46, yres - ymax - 10);
+	tft.drawLine(xmin, DISPLAY_HEIGHT_PX - ymax - 1, xmax - 1, DISPLAY_HEIGHT_PX - ymax - 1, BORDER_TOP_COLOR);
+	tft.setCursor(xmax - 46, DISPLAY_HEIGHT_PX - ymax - 10);
 	tft.print("2000ppm");
-	tft.drawLine(xstart, yres - ymax / 2 - 1, xend - 1, yres - ymax / 2 - 1,
-			GRID_COLOR);
+	int y_middle=ppm2coord(MAX_SENSOR_VALUE/2);
+	tft.drawLine(xmin, DISPLAY_HEIGHT_PX-y_middle, xmax - 1, DISPLAY_HEIGHT_PX-y_middle, GRID_COLOR);
 
-	tft.setCursor(xstart + 1, yres - ymin - 10);
+	tft.setCursor(xmin + 1, DISPLAY_HEIGHT_PX - ymin - 10);
 	tft.print("5h:20min");
 
-	for (int x = 0; x < xend; x++) {
-		int i = x - xend;
+	for (int x = xmin; x < xmax; x++) {
+		int i = x - xmax;
 		if (i % 60 == 0) {
-			tft.drawFastVLine(x, yres - ymax, ymax - ymin, GRID_COLOR);
+			tft.drawFastVLine(x, DISPLAY_HEIGHT_PX - ymax, ymax - ymin, GRID_COLOR);
 		}
 	}
 
@@ -71,9 +69,7 @@ void Chart1::draw_overlay() {
 void Chart1::plot_point(int x, int y, uint8_t value) {
 	auto color = palette(value);
 
-	tft.drawLine(x, yres - y - 1, x, yres - ymax, BACKGROUND_COLOR);
-	tft.drawLine(x, yres - ymin, x, yres - y, color);
-	//Much faster, but artifats seen
-//    tft.drawFastVLine(x, yres-ymax, ymax-y-1, BACKGROUND_COLOR);
-//    tft.drawFastVLine(x, yres-y, yres-y-1, color);
+	tft.drawLine(x, DISPLAY_HEIGHT_PX - y - 1, x, DISPLAY_HEIGHT_PX - ymax, BACKGROUND_COLOR);
+	tft.drawLine(x, DISPLAY_HEIGHT_PX - ymin, x, DISPLAY_HEIGHT_PX - y, color);
+	//tft.drawFastVLine Much faster, but artifats seen
 }

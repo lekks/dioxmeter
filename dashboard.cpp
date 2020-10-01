@@ -29,8 +29,6 @@ const unsigned long PLOT_DELAY = 60000;
 
 MCUFRIEND_kbv tft;
 
-#define MAX_STRING_LENGHT 32 //Doesn`t work with big values, I can`t understand why
-static char str_buf[MAX_STRING_LENGHT + 1];
 
 static inline uint16_t RGB(uint8_t r, uint8_t g, uint8_t b) {
 	return tft.color565(r, g, b);
@@ -46,25 +44,25 @@ static uint16_t palette_8bit(uint8_t x) {
 		return RGB(255, 255, 255);
 }
 
-
-
 static Chart1 plotter(tft, palette_8bit);
 
-
 static void test_palette() {
-	static Transform<0, 319, 0, 255> xtoc;
-	for (int i = 0; i < 320; ++i) {
+	const static Transform<0, DISPLAY_WIDTH_PX-1, 0, 255> xtoc;
+	for (int i = 0; i < DISPLAY_WIDTH_PX; ++i) {
 		uint16_t c = palette_8bit(xtoc(i));
 		tft.drawFastVLine(i, 0, 20, c);
 	}
+	for(;;);
 }
 
-
-void test_plot() {
-	static uint8_t mock = 0;
-	plotter.add_measuement(mock);
-	mock++;
-	plotter.mk_point();
+static void test_chart() {
+	const static Transform<0, DISPLAY_WIDTH_PX-1, MIN_SENSOR_VALUE, MAX_SENSOR_VALUE> pos2value;
+	for (int i = 0; i < DISPLAY_WIDTH_PX; ++i) {
+		plotter.add_measuement(pos2value(i));
+		plotter.mk_point();
+	}
+	plotter.update();
+	for(;;);
 }
 
 static void setup_display() {
@@ -93,7 +91,8 @@ void setup_dashboard(void) {
 }
 
 void update_label(int ppm) {
-	static const Transform<-100, 2000, 0, 255> ppm2color;
+	static char str_buf[16];
+	static const Transform<MIN_SENSOR_VALUE-500, MAX_SENSOR_VALUE, 0, 255> ppm2color;
 	static TftLabel ppm_printer {tft, BLACK, 80, 0, 8 };
 	static int _ppm = -1;
 
@@ -112,6 +111,7 @@ void update_chart(const Measurment &measurement){
 		unsigned long current_time = millis();
 		if (current_time >= next_plot_time && plotter.valid()) {
 			plotter.mk_point();
+			plotter.update();
 			next_plot_time += PLOT_DELAY;
 		}
 	}
@@ -119,7 +119,7 @@ void update_chart(const Measurment &measurement){
 
 
 void update_dashboard(const Measurment &measurement) {
-
+	test_chart();
 	update_label(measurement.value);
 	update_chart(measurement);
 }
