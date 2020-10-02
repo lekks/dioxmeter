@@ -13,7 +13,6 @@
 
 #include "chart.hpp"
 //#include <Fonts/FreeMonoBoldOblique12pt7b.h>
-//#include <Fonts/FreeSerif9pt7b.h>
 
 const unsigned long PLOT_DELAY = 60000;
 
@@ -69,15 +68,16 @@ static void setup_display() {
 	tft.setRotation(TFT_ROTATE);
 }
 
+#include <Fonts/FreeSans12pt7b.h>
 void setup_ttf() {
 	tft.fillScreen(BACKGROUND_COLOR);
 
-	//  tft.setFont(&FreeMonoBoldOblique12pt7b);
-	tft.setTextSize(3);
-	tft.setTextColor(GREEN);
-	tft.setCursor(5, 2);
+	tft.setFont(&FreeSans12pt7b);
+	tft.setTextSize(1);
+	tft.setTextColor(GREY);
+	tft.setCursor(5, 25);
 	tft.print("CO2");
-	tft.setCursor(5, 24);
+	tft.setCursor(5, 48);
 	tft.print("ppm");
 }
 
@@ -87,10 +87,12 @@ void setup_dashboard(void) {
 	plotter.update();
 }
 
+
+#include <Fonts/FreeSans24pt7b.h>
 void update_label(int ppm) {
 	char str_buf[16];
 	static const Transform<MIN_SENSOR_VALUE-500, MAX_SENSOR_VALUE, 0, 255> ppm2color;
-	static TftLabel ppm_printer {tft, BACKGROUND_COLOR, 80, 0, 8 };
+	static TftLabel ppm_printer {tft, BACKGROUND_COLOR, 100, 70, 2, &FreeSans24pt7b };
 	static int _ppm = -1;
 
 	if (_ppm != ppm) {

@@ -13,19 +13,22 @@
 
 
 class TftLabel {
-	int x, y;
-	char sz;
-	bool printed;
-	char last[64];
 	Adafruit_GFX& tft;
 	unsigned int background;
+	int x, y;
+	char sz;
+	const GFXfont *font;
+	bool printed;
+	char last[64];
+
 public:
-	TftLabel(Adafruit_GFX& tft, uint16_t background, int x, int y, char sz) :
-			tft(tft), background(background), x(x), y(y), sz(sz), printed(false) {
+	TftLabel(Adafruit_GFX& tft, uint16_t background, int x, int y, char sz, const GFXfont *font = nullptr) :
+			tft(tft), background(background), x(x), y(y), sz(sz), font(font), printed(false) {
 	}
 	;
 	void clear() {
 		if (printed) {
+			tft.setFont(font);
 			tft.setCursor(x, y);
 			tft.setTextSize(sz);
 			tft.setTextColor(background);
@@ -37,6 +40,7 @@ public:
 	void print(const char *txt, unsigned int color) {
 		if (strcmp(txt, last) || !printed) {
 			clear();
+			tft.setFont(font);
 			tft.setCursor(x, y);
 			tft.setTextSize(sz);
 			tft.setTextColor(color);

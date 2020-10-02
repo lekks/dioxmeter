@@ -56,6 +56,7 @@ void CustomChart::draw_overlay() {
 	const char x_label_yshift = -3;
 	const char y_label_yshift = 10;
 	char str_buf[8];
+	tft.setFont();
 	tft.setTextSize(1);
 	tft.setTextColor(TEXT_COLOR);
 
