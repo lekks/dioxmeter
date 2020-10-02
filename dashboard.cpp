@@ -68,17 +68,15 @@ static void setup_display() {
 	tft.setRotation(TFT_ROTATE);
 }
 
-#include <Fonts/FreeSans12pt7b.h>
+#include <Fonts/FreeSans18pt7b.h>
 void setup_ttf() {
 	tft.fillScreen(BACKGROUND_COLOR);
 
-	tft.setFont(&FreeSans12pt7b);
+	tft.setFont(&FreeSans18pt7b);
 	tft.setTextSize(1);
-	tft.setTextColor(GREY);
-	tft.setCursor(5, 25);
+	tft.setTextColor(WHITE);
+	tft.setCursor(5, 28);
 	tft.print("CO2");
-	tft.setCursor(5, 48);
-	tft.print("ppm");
 }
 
 void setup_dashboard(void) {
@@ -92,12 +90,12 @@ void setup_dashboard(void) {
 void update_label(int ppm) {
 	char str_buf[16];
 	static const Transform<MIN_SENSOR_VALUE-500, MAX_SENSOR_VALUE, 0, 255> ppm2color;
-	static TftLabel ppm_printer {tft, BACKGROUND_COLOR, 100, 70, 2, &FreeSans24pt7b };
+	static TftLabel ppm_printer {tft, BACKGROUND_COLOR, 100, 68, 2, &FreeSans24pt7b };
 	static int _ppm = -1;
 
 	if (_ppm != ppm) {
 		uint16_t color = palette_8bit(ppm2color(ppm));
-		sprintf(str_buf, "%d", ppm);
+		sprintf(str_buf, "%4d", ppm);
 		ppm_printer.print(str_buf, color);
 		_ppm = ppm;
 	}

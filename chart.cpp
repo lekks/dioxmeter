@@ -55,7 +55,7 @@ void ChartBase::draw_chart() {
 void CustomChart::draw_overlay() {
 	const char x_label_yshift = -3;
 	const char y_label_yshift = 10;
-	char str_buf[8];
+	char str_buf[16];
 	tft.setFont();
 	tft.setTextSize(1);
 	tft.setTextColor(TEXT_COLOR);
@@ -66,20 +66,20 @@ void CustomChart::draw_overlay() {
 			tft.drawFastVLine(x, DISPLAY_HEIGHT_PX - ymax, ymax - ymin, GRID_COLOR);
 
 			tft.setCursor(x-8, DISPLAY_HEIGHT_PX - ymin - x_label_yshift);
-			sprintf(str_buf, "%dhr", i/60);
+			sprintf(str_buf, "%d h", i/60);
 			tft.print(str_buf);
 		}
 	}
 
 	tft.drawLine(xmin, DISPLAY_HEIGHT_PX - ymax - 1, xmax - 1, DISPLAY_HEIGHT_PX - ymax - 1, BORDER_TOP_COLOR);
 	tft.setCursor(xmin + 2, DISPLAY_HEIGHT_PX - ymax - y_label_yshift);
-	sprintf(str_buf, "%dppm", MAX_SENSOR_VALUE);
+	sprintf(str_buf, "%d ppm", MAX_SENSOR_VALUE);
 	tft.print(str_buf);
 
 	int y_middle=ppm2coord(MAX_SENSOR_VALUE/2);
 	tft.drawLine(xmin, DISPLAY_HEIGHT_PX-y_middle, xmax - 1, DISPLAY_HEIGHT_PX-y_middle, GRID_COLOR);
 	tft.setCursor(xmin + 2, DISPLAY_HEIGHT_PX-y_middle - y_label_yshift);
-	sprintf(str_buf, "%dppm", MAX_SENSOR_VALUE/2);
+	sprintf(str_buf, "%d ppm", MAX_SENSOR_VALUE/2);
 	tft.print(str_buf);
 
 	tft.setCursor(xmax-6, DISPLAY_HEIGHT_PX - ymin - x_label_yshift);
