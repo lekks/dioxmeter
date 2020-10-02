@@ -44,7 +44,7 @@ static uint16_t palette_8bit(uint8_t x) {
 		return RGB(255, 255, 255);
 }
 
-static Chart1 plotter(tft, palette_8bit);
+static CustomChart plotter(tft, palette_8bit);
 
 static void test_palette() {
 	const static Transform<0, DISPLAY_WIDTH_PX-1, 0, 255> xtoc;
@@ -52,7 +52,6 @@ static void test_palette() {
 		uint16_t c = palette_8bit(xtoc(i));
 		tft.drawFastVLine(i, 0, 20, c);
 	}
-	for(;;);
 }
 
 static void test_chart() {
@@ -62,7 +61,6 @@ static void test_chart() {
 		plotter.mk_point();
 	}
 	plotter.update();
-	for(;;);
 }
 
 static void setup_display() {
@@ -72,7 +70,7 @@ static void setup_display() {
 }
 
 void setup_ttf() {
-	tft.fillScreen(BLACK);
+	tft.fillScreen(BACKGROUND_COLOR);
 
 	//  tft.setFont(&FreeMonoBoldOblique12pt7b);
 	tft.setTextSize(3);
@@ -81,7 +79,6 @@ void setup_ttf() {
 	tft.print("CO2");
 	tft.setCursor(5, 24);
 	tft.print("ppm");
-
 }
 
 void setup_dashboard(void) {
@@ -93,7 +90,7 @@ void setup_dashboard(void) {
 void update_label(int ppm) {
 	static char str_buf[16];
 	static const Transform<MIN_SENSOR_VALUE-500, MAX_SENSOR_VALUE, 0, 255> ppm2color;
-	static TftLabel ppm_printer {tft, BLACK, 80, 0, 8 };
+	static TftLabel ppm_printer {tft, BACKGROUND_COLOR, 80, 0, 8 };
 	static int _ppm = -1;
 
 	if (_ppm != ppm) {
@@ -106,7 +103,18 @@ void update_label(int ppm) {
 
 void update_chart(const Measurment &measurement){
 	static unsigned long next_plot_time = millis() + PLOT_DELAY;
+	static bool test_shown = false;
+
+	if (!test_shown && !measurement.valid) {
+		test_chart();
+		test_shown = true;
+	}
+
 	if (measurement.valid) {
+		if (test_shown) {
+			plotter.clear();
+			test_shown = false;
+		}
 		plotter.add_measuement(measurement.value);
 		unsigned long current_time = millis();
 		if (current_time >= next_plot_time && plotter.valid()) {
@@ -119,7 +127,7 @@ void update_chart(const Measurment &measurement){
 
 
 void update_dashboard(const Measurment &measurement) {
-	test_chart();
+//	test_chart();
 	update_label(measurement.value);
 	update_chart(measurement);
 }

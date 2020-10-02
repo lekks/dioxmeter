@@ -36,6 +36,7 @@ public:
 	void mk_point();
 	void update();
 	bool valid();
+	void clear();
 
 private:
 	Averager stat;
@@ -54,14 +55,13 @@ private:
 	void draw_chart();
 };
 
-class Chart1: public ChartBase { // @suppress("Class has a virtual method and non-virtual destructor")
+class CustomChart: public ChartBase { // @suppress("Class has a virtual method and non-virtual destructor")
 
-	const uint16_t BACKGROUND_COLOR = BLACK;
 	const uint16_t BORDER_TOP_COLOR = BLUE;
 	const uint16_t GRID_COLOR = BROWN;
 
 public:
-	Chart1(Adafruit_GFX &tft, Palette palette) :
+	CustomChart(Adafruit_GFX &tft, Palette palette) :
 			ChartBase(tft), palette(palette) {
 	}
 private:

@@ -23,6 +23,13 @@ void ChartBase::mk_point() {
 	stat.reset();
 }
 
+void ChartBase::clear() {
+	stat.reset();
+	pts.drop(pts.get_used());
+	tft.fillRect(xmin, DISPLAY_HEIGHT_PX - ymax, xmax-xmin, ymax-ymin, BACKGROUND_COLOR);
+	update();
+}
+
 void ChartBase::update() {
 	draw_underlay();
 	draw_chart();
@@ -45,7 +52,7 @@ void ChartBase::draw_chart() {
 	}
 }
 
-void Chart1::draw_overlay() {
+void CustomChart::draw_overlay() {
 	tft.setTextSize(1);
 	tft.setTextColor(CYAN);
 	tft.drawLine(xmin, DISPLAY_HEIGHT_PX - ymax - 1, xmax - 1, DISPLAY_HEIGHT_PX - ymax - 1, BORDER_TOP_COLOR);
@@ -66,10 +73,10 @@ void Chart1::draw_overlay() {
 
 }
 
-void Chart1::plot_point(int x, int y, uint8_t value) {
+void CustomChart::plot_point(int x, int y, uint8_t value) {
 	auto color = palette(value);
 
 	tft.drawLine(x, DISPLAY_HEIGHT_PX - y - 1, x, DISPLAY_HEIGHT_PX - ymax, BACKGROUND_COLOR);
-	tft.drawLine(x, DISPLAY_HEIGHT_PX - ymin, x, DISPLAY_HEIGHT_PX - y, color);
+	tft.drawLine(x, DISPLAY_HEIGHT_PX - ymin-1, x, DISPLAY_HEIGHT_PX - y, color);
 	//tft.drawFastVLine Much faster, but artifats seen
 }

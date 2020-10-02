@@ -34,7 +34,7 @@ static int makeNmeaSentense(char *buffer, int size, const char *sentense, ...) {
 }
 
 static inline void print_str(const char *str) {
-	Serial.println(str_buf);
+	Serial.println(str);
 }
 
 
@@ -54,7 +54,7 @@ void setup_log(void) {
 }
 
 void log_debug(const char *str) {
-	print_str(str_buf);
+	print_str(str);
 }
 
 void log_measurement(const Measurment &measurement) {
