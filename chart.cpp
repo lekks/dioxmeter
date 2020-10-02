@@ -53,24 +53,36 @@ void ChartBase::draw_chart() {
 }
 
 void CustomChart::draw_overlay() {
+	const char x_label_yshift = -3;
+	const char y_label_yshift = 10;
+	char str_buf[8];
 	tft.setTextSize(1);
-	tft.setTextColor(CYAN);
-	tft.drawLine(xmin, DISPLAY_HEIGHT_PX - ymax - 1, xmax - 1, DISPLAY_HEIGHT_PX - ymax - 1, BORDER_TOP_COLOR);
-	tft.setCursor(xmax - 46, DISPLAY_HEIGHT_PX - ymax - 10);
-	tft.print("2000ppm");
-	int y_middle=ppm2coord(MAX_SENSOR_VALUE/2);
-	tft.drawLine(xmin, DISPLAY_HEIGHT_PX-y_middle, xmax - 1, DISPLAY_HEIGHT_PX-y_middle, GRID_COLOR);
-
-	tft.setCursor(xmin + 1, DISPLAY_HEIGHT_PX - ymin - 10);
-	tft.print("5h:20min");
+	tft.setTextColor(TEXT_COLOR);
 
 	for (int x = xmin; x < xmax; x++) {
 		int i = x - xmax;
 		if (i % 60 == 0) {
 			tft.drawFastVLine(x, DISPLAY_HEIGHT_PX - ymax, ymax - ymin, GRID_COLOR);
+
+			tft.setCursor(x-8, DISPLAY_HEIGHT_PX - ymin - x_label_yshift);
+			sprintf(str_buf, "%dhr", i/60);
+			tft.print(str_buf);
 		}
 	}
 
+	tft.drawLine(xmin, DISPLAY_HEIGHT_PX - ymax - 1, xmax - 1, DISPLAY_HEIGHT_PX - ymax - 1, BORDER_TOP_COLOR);
+	tft.setCursor(xmin + 2, DISPLAY_HEIGHT_PX - ymax - y_label_yshift);
+	sprintf(str_buf, "%dppm", MAX_SENSOR_VALUE);
+	tft.print(str_buf);
+
+	int y_middle=ppm2coord(MAX_SENSOR_VALUE/2);
+	tft.drawLine(xmin, DISPLAY_HEIGHT_PX-y_middle, xmax - 1, DISPLAY_HEIGHT_PX-y_middle, GRID_COLOR);
+	tft.setCursor(xmin + 2, DISPLAY_HEIGHT_PX-y_middle - y_label_yshift);
+	sprintf(str_buf, "%dppm", MAX_SENSOR_VALUE/2);
+	tft.print(str_buf);
+
+	tft.setCursor(xmax-6, DISPLAY_HEIGHT_PX - ymin - x_label_yshift);
+	tft.print("0");
 }
 
 void CustomChart::plot_point(int x, int y, uint8_t value) {

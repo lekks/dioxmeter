@@ -19,7 +19,7 @@
 #define YELLOW  0xFFE0
 #define WHITE   0xFFFF
 #define BROWN   0x8000
-
-
+#define GREY    0x8410
+#define DARK_GREY    0x4208
 
 #endif /* NAMED_COLORS_H_ */

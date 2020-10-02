@@ -22,8 +22,8 @@ class ChartBase { // @suppress("Class has a virtual method and non-virtual destr
 protected:
 	static const int16_t xmin = 0;
 	static const int16_t xmax = DISPLAY_WIDTH_PX;
-	static const int16_t ymin = 0;
-	static const int16_t ymax = 180;
+	static const int16_t ymin = 14;
+	static const int16_t ymax = 160;
 
 	static const int16_t pmin = (ymax - ymin) * static_cast<long int>(MIN_SENSOR_VALUE)/ MAX_SENSOR_VALUE + ymin;
 	static const Transform<MIN_SENSOR_VALUE, MAX_SENSOR_VALUE, pmin, ymax> ppm2coord;
@@ -57,8 +57,9 @@ private:
 
 class CustomChart: public ChartBase { // @suppress("Class has a virtual method and non-virtual destructor")
 
-	const uint16_t BORDER_TOP_COLOR = BLUE;
-	const uint16_t GRID_COLOR = BROWN;
+	const uint16_t BORDER_TOP_COLOR = DARK_GREY;
+	const uint16_t GRID_COLOR = DARK_GREY;
+	const uint16_t TEXT_COLOR = WHITE;
 
 public:
 	CustomChart(Adafruit_GFX &tft, Palette palette) :
