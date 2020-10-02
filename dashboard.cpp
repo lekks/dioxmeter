@@ -90,7 +90,7 @@ void setup_dashboard(void) {
 void update_label(int ppm) {
 	char str_buf[16];
 	static const Transform<MIN_SENSOR_VALUE-500, MAX_SENSOR_VALUE, 0, 255> ppm2color;
-	static TftLabel ppm_printer {tft, BACKGROUND_COLOR, 100, 68, 2, &FreeSans24pt7b };
+	static TftLabelFill ppm_printer {tft, BACKGROUND_COLOR, 100, 68, 2, &FreeSans24pt7b };
 	static int _ppm = -1;
 
 	if (_ppm != ppm) {
