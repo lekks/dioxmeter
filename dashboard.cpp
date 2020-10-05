@@ -53,15 +53,6 @@ static void test_palette() {
 	}
 }
 
-static void test_chart() {
-	const static Transform<0, DISPLAY_WIDTH_PX-1, MIN_SENSOR_VALUE, MAX_SENSOR_VALUE> pos2value;
-	for (int i = 0; i < DISPLAY_WIDTH_PX; ++i) {
-		plotter.add_measuement(pos2value(i));
-		plotter.mk_point();
-	}
-	plotter.update();
-}
-
 static void setup_display() {
 	tft.reset();
 	tft.begin(TFT_ID);
@@ -89,7 +80,7 @@ void setup_dashboard(void) {
 #include <Fonts/FreeSans24pt7b.h>
 void update_label(int ppm) {
 	char str_buf[16];
-	static const Transform<MIN_SENSOR_VALUE-500, MAX_SENSOR_VALUE, 0, 255> ppm2color;
+	static const Transform<MIN_CHART_VALUE-500, MAX_CHART_VALUE, 0, MAX_CHART_COLOR> ppm2color;
 	static TftLabelFill ppm_printer {tft, BACKGROUND_COLOR, 100, 68, 2, &FreeSans24pt7b };
 	static int _ppm = -1;
 
@@ -106,7 +97,7 @@ void update_chart(const Measurment &measurement){
 	static bool test_shown = false;
 
 	if (!test_shown && !measurement.valid) {
-		test_chart();
+		plotter.fill_test();
 		test_shown = true;
 	}
 
@@ -127,7 +118,6 @@ void update_chart(const Measurment &measurement){
 
 
 void update_dashboard(const Measurment &measurement) {
-//	test_chart();
 	update_label(measurement.value);
 	update_chart(measurement);
 }

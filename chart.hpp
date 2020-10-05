@@ -13,6 +13,7 @@
 #include "named_colors.h"
 #include "static_ring.hpp"
 
+#include <stdint.h>
 #include <Adafruit_GFX.h>    // Core graphics library
 
 
@@ -20,13 +21,13 @@ typedef uint16_t (*Palette)(uint8_t x);
 
 class ChartBase { // @suppress("Class has a virtual method and non-virtual destructor")
 protected:
-	static const int16_t xmin = 0;
-	static const int16_t xmax = DISPLAY_WIDTH_PX;
-	static const int16_t ymin = 14;
-	static const int16_t ymax = 160;
+	static const int16_t left_pos = 0;
+	static const int16_t right_pos = DISPLAY_WIDTH_PX;
+	static const int16_t bottom_pos = 14;
+	static const int16_t top_pos = 160;
 
-	static const int16_t pmin = (ymax - ymin) * static_cast<long int>(MIN_SENSOR_VALUE)/ MAX_SENSOR_VALUE + ymin;
-	static const Transform<MIN_SENSOR_VALUE, MAX_SENSOR_VALUE, pmin, ymax> ppm2coord;
+	static const int16_t min_chart_pos = (top_pos - bottom_pos) * static_cast<long int>(MIN_CHART_VALUE)/ MAX_CHART_VALUE + bottom_pos;
+	static const Transform<MIN_CHART_VALUE, MAX_CHART_VALUE, min_chart_pos, top_pos> ppm2coord;
 
 	Adafruit_GFX &tft;
 
@@ -37,14 +38,14 @@ public:
 	void update();
 	bool valid();
 	void clear();
-
+	void fill_test();
 private:
 	Averager stat;
-	typedef StaticRing<uint8_t, uint16_t, xmax - xmin> PointsBuffer;
+	typedef StaticRing<uint8_t, uint16_t, right_pos - left_pos> PointsBuffer;
 	static PointsBuffer pts;
-	static const Transform<MIN_SENSOR_VALUE, MAX_SENSOR_VALUE, 0, 255> ppm2compr;
-	static const Transform<0, 255, pmin, ymax> comr2coord;
-	static const Transform<0, 255, 60, 255> compr2color;
+	static const Transform<MIN_CHART_VALUE, MAX_CHART_VALUE, 0, UINT8_MAX> ppm2compr;
+	static const Transform<0, UINT8_MAX, min_chart_pos, top_pos> comr2coord;
+	static const Transform<0, UINT8_MAX, MIN_CHART_COLOR, MAX_CHART_COLOR> compr2color;
 
 	virtual void plot_point(int x, int y, uint8_t value) =0;
 	virtual void draw_underlay() {
