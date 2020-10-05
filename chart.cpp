@@ -105,6 +105,16 @@ void CustomChart::plot_point(int x, int y, uint8_t value) {
 	auto color = palette(value);
 
 	tft.drawLine(x, DISPLAY_HEIGHT_PX - y - 1, x, DISPLAY_HEIGHT_PX - top_pos, BACKGROUND_COLOR);
-	tft.drawLine(x, DISPLAY_HEIGHT_PX - bottom_pos-1, x, DISPLAY_HEIGHT_PX - y, color);
+	if(line_width) {
+		const int y2 = max(y-20,bottom_pos);
+		tft.drawLine(x, DISPLAY_HEIGHT_PX - y2, x, DISPLAY_HEIGHT_PX - y, color);
+		tft.drawLine(x, DISPLAY_HEIGHT_PX - bottom_pos-1, x, DISPLAY_HEIGHT_PX - y2-1, BACKGROUND_COLOR);
+	} else {
+		tft.drawLine(x, DISPLAY_HEIGHT_PX - bottom_pos-1, x, DISPLAY_HEIGHT_PX - y, color);
+	}
+
+	//	tft.drawLine(x, DISPLAY_HEIGHT_PX - bottom_pos-1, x, DISPLAY_HEIGHT_PX - y, color);
+
+
 	//tft.drawFastVLine Much faster, but artifats seen
 }

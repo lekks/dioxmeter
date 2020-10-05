@@ -58,6 +58,7 @@ private:
 
 class CustomChart: public ChartBase { // @suppress("Class has a virtual method and non-virtual destructor")
 
+	const int line_width=20; // 0 to flood
 	const uint16_t BORDER_TOP_COLOR = DARK_GREY;
 	const uint16_t GRID_COLOR = DARK_GREY;
 	const uint16_t TEXT_COLOR = WHITE;
