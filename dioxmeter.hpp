@@ -8,7 +8,7 @@
 #ifndef DIOXMETER_HPP_
 #define DIOXMETER_HPP_
 
-#define VER "1.3"
+#define VER "1.4"
 
 struct Measurment {
 	int value;

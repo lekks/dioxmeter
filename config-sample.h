@@ -1,8 +1,11 @@
 //Copy to config.h and tune
+
+// Display properties
 #define TFT_ID 0x9341
-#define TFT_ROTATE 1 //USE 1 and 3 for horizontal orientation
+#define TFT_ROTATE 1 //USE 1 and 3 for horisontal orientation
 
 
+// Chart properties
 #define  MIN_CHART_VALUE 400
 #define  MAX_CHART_VALUE 2000
 
@@ -13,3 +16,8 @@
 #define DISPLAY_HEIGHT_PX 240
 
 #define  BACKGROUND_COLOR BLACK
+
+
+// Sensor and measurement properties
+#define HEATING_DELAY 180000L
+#define MAX_PPM 5000

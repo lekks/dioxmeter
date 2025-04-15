@@ -8,23 +8,15 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <MCUFRIEND_kbv.h>
 
 #include "chart.hpp"
-//#include <Fonts/FreeMonoBoldOblique12pt7b.h>
+#include <Fonts/FreeSans18pt7b.h>
+#include <Fonts/FreeSans24pt7b.h>
 
 const unsigned long PLOT_DELAY = 60000;
-
-/*
- #define LCD_CS A3 // Chip Select goes to Analog 3
- #define LCD_CD A2 // Command/Data goes to Analog 2
- #define LCD_WR A1 // LCD Write goes to Analog 1
- #define LCD_RD A0 // LCD Read goes to Analog 0
-
- #define LCD_RESET A4 // Can alternately just connect to Arduino's reset pin
- #include <TftSpfd5408.h> // Hardware-specific library
- */
 
 MCUFRIEND_kbv tft;
 
@@ -59,7 +51,6 @@ static void setup_display() {
 	tft.setRotation(TFT_ROTATE);
 }
 
-#include <Fonts/FreeSans18pt7b.h>
 void setup_ttf() {
 	tft.fillScreen(BACKGROUND_COLOR);
 
@@ -77,7 +68,6 @@ void setup_dashboard(void) {
 }
 
 
-#include <Fonts/FreeSans24pt7b.h>
 void update_label(int ppm) {
 	char str_buf[16];
 	static const Transform<MIN_CHART_VALUE-500, MAX_CHART_VALUE, 0, MAX_CHART_COLOR> ppm2color;
