@@ -107,6 +107,11 @@ void update_chart(const Measurment &measurement){
 }
 
 
+void update_calibration_status(){
+		static TftLabelFill status_printer {tft, BACKGROUND_COLOR, 40, 120, 1, &FreeSans18pt7b };
+		status_printer.print("Calibrating",BROWN );
+}
+
 void update_dashboard(const Measurment &measurement) {
 	update_label(measurement.value);
 	update_chart(measurement);
