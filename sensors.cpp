@@ -49,7 +49,7 @@ SIGNAL(PCINT1_vect) //PCINT13 PC5 ADC5
 }
 
 int calc_ppm(long period, long imp, int max_ppm) {
-	long dead_time = period / 5000;
+	long dead_time = period / 500;
 	return (long)max_ppm * (imp - dead_time) / (period - dead_time*2);
 }
 
