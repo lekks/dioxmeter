@@ -20,7 +20,7 @@ void ChartBase::add_measuement(int value) {
 }
 
 void ChartBase::mk_point() {
-	pts.push(ppm2compr(stat.get_mean()));
+	pts.push(ppm2compr(stat.get_trimmed_mean()));
 	stat.reset();
 }
 

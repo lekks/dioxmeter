@@ -2,6 +2,7 @@
 #define UTILS_HPP_
 
 #include <stdint.h>
+#include <limits.h>
 
 template<const int16_t smin, const int16_t smax, const int16_t cmin, const int16_t cmax>
 class Transform {
@@ -21,13 +22,17 @@ class Averager {
 	int min_val;
 	int max_val;
 public:
-	Averager() :
-			cnt(0), accum(0), min_val(0), max_val(0) {
-	};
+	Averager()
+	  : cnt(0), accum(0),
+	    min_val(INT_MAX),
+	    max_val(INT_MIN) {
+	}
 
 	void reset() {
 		cnt = 0;
 		accum = 0;
+		min_val = INT_MAX;
+		max_val = INT_MIN;
 	}
 
 	void add(int x) {
@@ -43,25 +48,37 @@ public:
 		++cnt;
 	}
 
-	bool valid() {
+	bool valid() const {
 		return cnt > 0;
 	}
 
-	int16_t get_mean() {
+	int get_mean() const {
 		if (cnt)
-			return accum / cnt;
+			return static_cast<int>(accum / cnt);
 		else
 			return 0;
 	}
 
-	int16_t get_min() {
+	int get_trimmed_mean() const {
+		if (cnt >= 3) {
+			// Remove min and max values from the accumulator
+			return static_cast<int>((accum - min_val - max_val) / (cnt - 2));
+		} else if (cnt > 0) {
+			// Not enough values to trim, return regular mean
+			return static_cast<int>(accum / cnt);
+		} else {
+			return 0;
+		}
+	}
+
+	int get_min() const {
 		if (cnt)
 			return min_val;
 		else
 			return 0;
 	}
 
-	int16_t get_max() {
+	int get_max() const {
 		if (cnt)
 			return max_val;
 		else
