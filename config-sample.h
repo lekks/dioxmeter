@@ -13,3 +13,7 @@
 #define DISPLAY_HEIGHT_PX 240
 
 #define  BACKGROUND_COLOR BLACK
+
+// Sensor and measurement properties
+#define HEATING_DELAY 180000L
+#define MAX_PPM 5000
