@@ -12,47 +12,6 @@
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <string.h>
 
-
-//Fast for small and rough fonts
-class TftLabelRepaint {
-	Adafruit_GFX& tft;
-	unsigned int background;
-	int x, y;
-	char sz;
-	const GFXfont *font;
-	bool printed;
-	char last[64];
-
-public:
-	TftLabelRepaint(Adafruit_GFX& tft, uint16_t background, int x, int y, char sz, const GFXfont *font = nullptr) :
-			tft(tft), background(background), x(x), y(y), sz(sz), font(font), printed(false) {
-	}
-	;
-	void clear() {
-		if (printed) {
-			tft.setFont(font);
-			tft.setCursor(x, y);
-			tft.setTextSize(sz);
-			tft.setTextColor(background);
-			tft.print(last);
-			printed = false;
-		}
-	}
-
-	void print(const char *txt, unsigned int color) {
-		if (strcmp(txt, last) || !printed) {
-			clear();
-			tft.setFont(font);
-			tft.setCursor(x, y);
-			tft.setTextSize(sz);
-			tft.setTextColor(color);
-			tft.print(txt);
-			printed = true;
-			strcpy(last, txt);
-		}
-	}
-};
-
 //Could be faster for fine fonts
 class TftLabelFill {
 	Adafruit_GFX& tft;

@@ -9,12 +9,12 @@
 #include "sensor.hpp"
 #include <Arduino.h>
 #include "utils.hpp"
+#include "logging.hpp"
 
-#define HEATING_DELAY 180000L
 
-static volatile unsigned long period;
-static volatile unsigned long imp;
-static volatile unsigned int cnt;
+static volatile unsigned long period_us;
+static volatile unsigned long pulse_time_us;
+static volatile unsigned int mesurements_cnt;
 
 static void setup_pcint() {
 	DDRC &= ~bit(PC5); //AIN
@@ -27,31 +27,30 @@ SIGNAL(PCINT1_vect) //PCINT13 PC5 ADC5
 {
 	static volatile bool valid=false;
 	static volatile unsigned long imp_int;
-	static volatile bool last_sig;
+	static volatile bool last_level;
 	static volatile unsigned long last_on;
 
-	bool sig = PINC & _BV(PC5);
-	if(last_sig != sig) {
-		//unsigned long time = millis();
+	bool level = PINC & _BV(PC5);
+	if(last_level != level) {
 		unsigned long time = micros();
-		if(sig) {
+		if(level) {
 			if(valid) {
-				period = time_diff(last_on,time);
-				imp = imp_int;
-				++cnt;
+				period_us = time_diff(last_on,time);
+				pulse_time_us = imp_int;
+				++mesurements_cnt;
 			}
 			valid = true;
 			last_on = time;
 		} else {
 			imp_int = time_diff(last_on,time);
 		}
-		last_sig = sig;
+		last_level = level;
 	}
 }
 
-int calc_ppm(unsigned long period, unsigned long imp, int MAX_PPM) {
+int calc_ppm(unsigned long period, unsigned long imp, int max_ppm) {
 	int dead_time = period / 251;
-	return MAX_PPM * (imp - dead_time / 2) / (period - dead_time);
+	return max_ppm * (imp - dead_time / 2) / (period - dead_time);
 }
 
 void setup_co2() {
@@ -68,9 +67,9 @@ bool measue_co2(Measurment &result) {
 		heated = true;
 	}
 	result.valid = heated;
-	if (_cnt != cnt) {
-		 ppm = calc_ppm(period, imp, 5000);
-		_cnt = cnt;
+	if (_cnt != mesurements_cnt) {
+		 ppm = calc_ppm(period_us, pulse_time_us, MAX_PPM);
+		_cnt = mesurements_cnt;
 		result.value = ppm;
 		return true;
 	} else {

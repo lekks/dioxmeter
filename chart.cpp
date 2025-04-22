@@ -5,13 +5,14 @@
  *      Author: ldir
  */
 
+#include <stdint.h>
 #include "logging.hpp"
 #include "chart.hpp"
 
 ChartBase::PointsBuffer ChartBase::pts;
 
-ChartBase::ChartBase(Adafruit_GFX &tft) :
-		tft(tft) {
+ChartBase::ChartBase(Adafruit_GFX &tft)
+  : tft(tft) {
 	stat.reset();
 }
 
@@ -20,14 +21,14 @@ void ChartBase::add_measuement(int value) {
 }
 
 void ChartBase::mk_point() {
-	pts.push(ppm2compr(stat.get_mean()));
+	pts.push(ppm2compr(stat.get_trimmed_mean()));
 	stat.reset();
 }
 
 void ChartBase::clear() {
 	stat.reset();
 	pts.drop(pts.get_used());
-	tft.fillRect(left_pos, DISPLAY_HEIGHT_PX - top_pos, right_pos-left_pos, top_pos-bottom_pos, BACKGROUND_COLOR);
+	tft.fillRect(left_pos, DISPLAY_HEIGHT_PX - top_pos, right_pos - left_pos, top_pos - bottom_pos, BACKGROUND_COLOR);
 	update();
 }
 
@@ -40,15 +41,27 @@ void ChartBase::update() {
 bool ChartBase::valid() {
 	return stat.valid();
 }
+
 void ChartBase::draw_chart() {
-	{
-		for (int x = left_pos; x < right_pos; x++) {
-			int i = x - right_pos + pts.get_used();
-			if (i >= 0) {
-				uint8_t p = *pts.get(i);
-				plot_point(x, comr2coord(p),
-						static_cast<uint8_t>(compr2color(p)));
+	for (int x = left_pos; x < right_pos; x++) {
+		int i = x - right_pos + pts.get_used();
+		if (i >= 0) {
+			uint16_t accum = *pts.get(i);
+			uint8_t cnt = 1;
+
+			if (i > 0) {
+				accum += *pts.get(i - 1);
+				++cnt;
 			}
+
+			if (i < pts.get_used() - 1) {
+				accum += *pts.get(i + 1);
+				++cnt;
+			}
+			// Middle points - average with both neighbors
+			uint8_t avg_p = accum / cnt;
+			plot_point(x, comr2coord(avg_p),
+			           static_cast<uint8_t>(compr2color(avg_p)));
 		}
 	}
 }
@@ -61,9 +74,6 @@ void ChartBase::fill_test() {
 		mk_point();
 	}
 	update();
-	char str_buf[16];
-	sprintf(str_buf, "%d", min_chart_pos);
-	log_debug(str_buf);
 }
 
 
@@ -80,8 +90,8 @@ void CustomChart::draw_overlay() {
 		if (i % 60 == 0) {
 			tft.drawFastVLine(x, DISPLAY_HEIGHT_PX - top_pos, top_pos - bottom_pos, GRID_COLOR);
 
-			tft.setCursor(x-8, DISPLAY_HEIGHT_PX - bottom_pos - x_label_yshift);
-			sprintf(str_buf, "%d h", i/60);
+			tft.setCursor(x - 8, DISPLAY_HEIGHT_PX - bottom_pos - x_label_yshift);
+			sprintf(str_buf, "%d h", i / 60);
 			tft.print(str_buf);
 		}
 	}
@@ -91,13 +101,13 @@ void CustomChart::draw_overlay() {
 	sprintf(str_buf, "%d ppm", MAX_CHART_VALUE);
 	tft.print(str_buf);
 
-	int y_middle=ppm2coord(MAX_CHART_VALUE/2);
-	tft.drawLine(left_pos, DISPLAY_HEIGHT_PX-y_middle, right_pos - 1, DISPLAY_HEIGHT_PX-y_middle, GRID_COLOR);
-	tft.setCursor(left_pos + 2, DISPLAY_HEIGHT_PX-y_middle - y_label_yshift);
-	sprintf(str_buf, "%d ppm", MAX_CHART_VALUE/2);
+	int y_middle = ppm2coord(MAX_CHART_VALUE / 2);
+	tft.drawLine(left_pos, DISPLAY_HEIGHT_PX - y_middle, right_pos - 1, DISPLAY_HEIGHT_PX - y_middle, GRID_COLOR);
+	tft.setCursor(left_pos + 2, DISPLAY_HEIGHT_PX - y_middle - y_label_yshift);
+	sprintf(str_buf, "%d ppm", MAX_CHART_VALUE / 2);
 	tft.print(str_buf);
 
-	tft.setCursor(right_pos-6, DISPLAY_HEIGHT_PX - bottom_pos - x_label_yshift);
+	tft.setCursor(right_pos - 6, DISPLAY_HEIGHT_PX - bottom_pos - x_label_yshift);
 	tft.print("0");
 }
 
@@ -105,16 +115,11 @@ void CustomChart::plot_point(int x, int y, uint8_t value) {
 	auto color = palette(value);
 
 	tft.drawLine(x, DISPLAY_HEIGHT_PX - y - 1, x, DISPLAY_HEIGHT_PX - top_pos, BACKGROUND_COLOR);
-	if(line_width) {
-		const int y2 = max(y-20,bottom_pos);
+	if (line_width) {
+		const int y2 = max(y - 20, bottom_pos);
 		tft.drawLine(x, DISPLAY_HEIGHT_PX - y2, x, DISPLAY_HEIGHT_PX - y, color);
-		tft.drawLine(x, DISPLAY_HEIGHT_PX - bottom_pos-1, x, DISPLAY_HEIGHT_PX - y2-1, BACKGROUND_COLOR);
+		tft.drawLine(x, DISPLAY_HEIGHT_PX - bottom_pos - 1, x, DISPLAY_HEIGHT_PX - y2 - 1, BACKGROUND_COLOR);
 	} else {
-		tft.drawLine(x, DISPLAY_HEIGHT_PX - bottom_pos-1, x, DISPLAY_HEIGHT_PX - y, color);
+		tft.drawLine(x, DISPLAY_HEIGHT_PX - bottom_pos - 1, x, DISPLAY_HEIGHT_PX - y, color);
 	}
-
-	//	tft.drawLine(x, DISPLAY_HEIGHT_PX - bottom_pos-1, x, DISPLAY_HEIGHT_PX - y, color);
-
-
-	//tft.drawFastVLine Much faster, but artifats seen
 }
