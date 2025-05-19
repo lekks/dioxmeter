@@ -68,7 +68,12 @@ bool measue_co2(Measurment &result) {
 	}
 	result.valid = heated;
 	if (_cnt != mesurements_cnt) {
-		 ppm = calc_ppm(period_us, pulse_time_us, MAX_PPM);
+		ppm = calc_ppm(period_us, pulse_time_us, MAX_PPM);
+
+		if(ppm > VALID_MAX_PPM || ppm < VALID_MIN_PPM) {
+			return false;
+		}
+
 		_cnt = mesurements_cnt;
 		result.value = ppm;
 		return true;

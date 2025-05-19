@@ -21,3 +21,6 @@
 // Sensor and measurement properties
 #define HEATING_DELAY 120000L
 #define MAX_PPM 5000
+
+#define VALID_MAX_PPM 4500
+#define VALID_MIN_PPM 350
